@@ -35,7 +35,6 @@ func (l NewLineDelimited[T]) MarshalText() ([]byte, error) {
 			if err != nil {
 				return nil, fmt.Errorf("failed to marshal entry: %w", err)
 			}
-			sb.WriteRune(' ')
 			sb.Write(text)
 		default:
 			// Maybe the type has a pointer receiver for MarshalText?
@@ -44,10 +43,9 @@ func (l NewLineDelimited[T]) MarshalText() ([]byte, error) {
 				if err != nil {
 					return nil, fmt.Errorf("failed to marshal entry: %w", err)
 				}
-				sb.WriteRune(' ')
 				sb.Write(text)
 			} else {
-				sb.WriteString(fmt.Sprintf(" %v", entry))
+				sb.WriteString(fmt.Sprintf("%v", entry))
 			}
 		}
 	}

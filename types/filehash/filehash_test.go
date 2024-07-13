@@ -70,8 +70,8 @@ func TestFileHash_MarshalText(t *testing.T) {
 	require.NoError(t, err)
 
 	expected := `
- 0ed6d4c8891eb86358b94bb35d9e4da4 1484322 contrib/Contents-all
- d0a0325a97c42fd5f66a8c3e29bcea64 98581 contrib/Contents-all.gz`
+0ed6d4c8891eb86358b94bb35d9e4da4 1484322 contrib/Contents-all
+d0a0325a97c42fd5f66a8c3e29bcea64 98581 contrib/Contents-all.gz`
 
 	require.Equal(t, expected, string(text))
 }

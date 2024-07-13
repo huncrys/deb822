@@ -84,7 +84,7 @@ func TestNewLineDelimited(t *testing.T) {
 			text, err := l.MarshalText()
 			require.NoError(t, err)
 
-			require.Equal(t, "\n 1\n 2\n 3", string(text))
+			require.Equal(t, "\n1\n2\n3", string(text))
 		})
 
 		t.Run("UnmarshalText", func(t *testing.T) {
@@ -122,7 +122,7 @@ func TestNewLineDelimited(t *testing.T) {
 			text, err := l.MarshalText()
 			require.NoError(t, err)
 
-			require.Equal(t, "\n 1\n 2\n 3", string(text))
+			require.Equal(t, "\n1\n2\n3", string(text))
 		})
 
 		t.Run("UnmarshalText", func(t *testing.T) {
