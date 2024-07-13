@@ -84,12 +84,12 @@ func TestNewLineDelimited(t *testing.T) {
 			text, err := l.MarshalText()
 			require.NoError(t, err)
 
-			require.Equal(t, " 1\n 2\n 3", string(text))
+			require.Equal(t, "\n 1\n 2\n 3", string(text))
 		})
 
 		t.Run("UnmarshalText", func(t *testing.T) {
 			var l list.NewLineDelimited[big.Int]
-			err := l.UnmarshalText([]byte("1\n2\n3"))
+			err := l.UnmarshalText([]byte("\n 1\n 2\n 3"))
 			require.NoError(t, err)
 
 			require.Equal(t, list.NewLineDelimited[big.Int]{*big.NewInt(1), *big.NewInt(2), *big.NewInt(3)}, l)
@@ -103,7 +103,7 @@ func TestNewLineDelimited(t *testing.T) {
 			text, err := l.MarshalText()
 			require.NoError(t, err)
 
-			require.Equal(t, "a\nb\nc", string(text))
+			require.Equal(t, "\na\nb\nc", string(text))
 		})
 
 		t.Run("UnmarshalText", func(t *testing.T) {
@@ -122,12 +122,12 @@ func TestNewLineDelimited(t *testing.T) {
 			text, err := l.MarshalText()
 			require.NoError(t, err)
 
-			require.Equal(t, " 1\n 2\n 3", string(text))
+			require.Equal(t, "\n 1\n 2\n 3", string(text))
 		})
 
 		t.Run("UnmarshalText", func(t *testing.T) {
 			var l list.NewLineDelimited[int]
-			err := l.UnmarshalText([]byte("1\n2\n3"))
+			err := l.UnmarshalText([]byte("\n 1\n 2\n 3"))
 			require.NoError(t, err)
 
 			require.Equal(t, list.NewLineDelimited[int]{1, 2, 3}, l)

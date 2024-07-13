@@ -59,7 +59,6 @@ func TestPackage(t *testing.T) {
 		Priority:      "optional",
 		Filename:      "pool/main/0/0ad/0ad_0.0.26-3_amd64.deb",
 		Size:          7891488,
-		MD5sum:        "4d471183a39a3a11d00cd35bf9f6803d",
 		SHA256:        "3a2118df47bf3f04285649f0455c2fc6fe2dc7f0b237073038aa00af41f0d5f2",
 	}
 

@@ -19,30 +19,30 @@ import (
 	"github.com/dpeckett/deb822/types/version"
 )
 
-// Package represents a Debian package.
+// Package represents a Debian package with all its metadata fields.
 type Package struct {
-	// Name is the name of the package.
+	// Name is the name of the binary package.
 	Name string `json:"Package"`
-	// Source is the source package name.
+	// Source is the name of the source package from which this package is built.
 	Source string
 	// Version is the version of the package.
 	Version version.Version
-	// InstalledSize is the installed size of the package, in kilobytes.
+	// InstalledSize is the estimated installed size of the package, in kilobytes.
 	InstalledSize int `json:"Installed-Size,omitempty,string"`
-	// Maintainer is the person or organization responsible for the package.
+	// Maintainer is the name and email address of the person or organization responsible for the package.
 	Maintainer string
-	// Architecture is the architecture the package is built for.
+	// Architecture is the Debian machine architecture the package is built for.
 	Architecture arch.Arch
-	// MultiArch is the multi-architecture hint for the package.
+	// MultiArch is the multi-architecture field, specifying if the package can be installed alongside other architectures.
 	// Valid values are "same", "foreign", or the name of an architecture.
 	MultiArch string `json:"Multi-Arch"`
-	// Replaces lists packages that this package replaces.
+	// Replaces lists other packages that this package replaces.
 	Replaces dependency.Dependency
-	// Breaks lists packages that this package breaks.
+	// Breaks lists other packages that this package breaks.
 	Breaks dependency.Dependency
 	// Provides lists virtual packages that this package provides.
 	Provides dependency.Dependency
-	// Conflicts lists packages that conflict with this package.
+	// Conflicts lists other packages that conflict with this package.
 	Conflicts dependency.Dependency
 	// Enhances lists packages that this package enhances.
 	Enhances dependency.Dependency
@@ -54,49 +54,46 @@ type Package struct {
 	Suggests dependency.Dependency
 	// PreDepends lists packages that must be installed and configured before this package.
 	PreDepends dependency.Dependency `json:"Pre-Depends"`
-	// Description provides a short description of the package.
+	// Description provides a short description and a long description of the package.
 	Description string
-	// Homepage is the URL of the package's homepage.
+	// Homepage is the URL of the package's homepage, typically where more information can be found.
 	Homepage string
-	// Tag lists tags associated with the package.
+	// Tag lists tags associated with the package, separated by commas.
 	Tag list.CommaDelimited[string]
-	// Section categorizes the package within the archive.
+	// Section categorizes the package within the Debian archive, such as "admin", "devel", or "x11".
 	Section string
-	// Priority defines the importance of the package.
+	// Priority defines the importance of the package within the Debian system, such as "required", "standard", or "optional".
 	Priority string
-	// Essential is true if the package is essential for the system to function.
+	// Essential indicates if the package is essential for the system to function. If true, the package cannot be removed.
 	Essential *boolean.Boolean `json:",omitempty"`
-	// Important is true if the package is important for the system to function.
-	// This is a less strict version of Essential.
+	// Important indicates if the package is important for the system to function. This is less strict than Essential.
 	Important *boolean.Boolean `json:",omitempty"`
-	// Protected is true if the package is protected. Protected packages contain
-	// mostly important system boot infrastructure.
+	// Protected indicates if the package is protected, containing important system boot infrastructure.
 	Protected *boolean.Boolean `json:",omitempty"`
 	// Filename is the name of the package file.
 	Filename string
 	// Size is the size of the package file, in bytes.
 	Size int `json:",omitempty,string"`
-	// MD5sum is the MD5 checksum of the package file.
-	MD5sum string
-	// SHA256 is the SHA-256 checksum of the package file.
+	// SHA256 is the SHA-256 checksum of the package file for integrity verification.
 	SHA256 string
 
 	// Control fields used in the dpkg status file.
 
-	// Status is the package status.
+	// Status indicates the current status of the package (e.g., "install ok installed").
 	Status list.SpaceDelimited[string] `json:",omitempty"`
-	// ConfigVersion is the version of the package to which the configuration
-	// files belong.
+	// ConfigVersion is the version of the package to which the configuration files belong.
 	ConfigVersion *version.Version `json:"Config-Version,omitempty"`
 	// Conffiles lists configuration files that are part of the package.
 	Conffiles list.NewLineDelimited[string] `json:",omitempty"`
 }
 
-// ID returns a unique identifier for the package.
+// ID returns a unique identifier for the package, combining the name, version, and architecture.
 func (p Package) ID() string {
 	return p.Name + "_" + p.Version.String() + "_" + p.Architecture.String()
 }
 
+// Compare compares two packages by name, version, and architecture.
+// It returns an integer comparing the two packages lexicographically.
 func (a Package) Compare(b Package) int {
 	// Compare package names.
 	if cmp := strings.Compare(a.Name, b.Name); cmp != 0 {
@@ -112,9 +109,6 @@ func (a Package) Compare(b Package) int {
 	if a.Architecture.Is(&b.Architecture) || b.Architecture.Is(&a.Architecture) {
 		return 0
 	}
-	if cmp := strings.Compare(a.Architecture.String(), b.Architecture.String()); cmp != 0 {
-		return cmp
-	}
 
-	return 0
+	return strings.Compare(a.Architecture.String(), b.Architecture.String())
 }

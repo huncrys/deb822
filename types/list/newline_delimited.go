@@ -20,6 +20,8 @@ type NewLineDelimited[T any] []T
 
 func (l NewLineDelimited[T]) MarshalText() ([]byte, error) {
 	var sb strings.Builder
+	sb.WriteString("\n")
+
 	for i, entry := range l {
 		if i > 0 {
 			sb.WriteString("\n")

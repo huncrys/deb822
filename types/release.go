@@ -13,37 +13,42 @@ import (
 	"encoding/hex"
 
 	"github.com/dpeckett/deb822/types/arch"
+	"github.com/dpeckett/deb822/types/boolean"
 	"github.com/dpeckett/deb822/types/filehash"
 	"github.com/dpeckett/deb822/types/list"
 	"github.com/dpeckett/deb822/types/time"
 )
 
-// Release represents a Debian release.
+// Release represents a Debian release with its associated metadata.
 type Release struct {
-	// Origin is the origin of the release.
+	// Origin specifies the origin of the release, typically indicating the entity that created it.
 	Origin string
-	// Label is the label of the release.
+	// Label provides a human-readable label for the release.
 	Label string
-	// Suite is the suite of the release.
+	// Suite indicates the suite (such as stable, testing, unstable) the release belongs to.
 	Suite string
-	// Version is the version of the release.
+	// Version denotes the version number of the release.
 	Version string
-	// Codename is the codename of the release.
+	// Codename is the codename assigned to the release (e.g., "buster", "bullseye").
 	Codename string
-	// Changelogs is the URL to the changelogs for the release.
+	// Changelogs provides the URL to the changelogs for the release, detailing changes and updates.
 	Changelogs string
-	// Date is the date the release was published.
+	// Date is the timestamp indicating when the release was published.
 	Date time.Time
-	// ValidUntil is the date the release is valid until.
-	ValidUntil time.Time `json:"Valid-Until"`
-	// Architectures lists the architectures supported by the release.
+	// ValidUntil specifies the date until which the release is considered valid. It is optional.
+	ValidUntil *time.Time `json:"Valid-Until,omitempty"`
+	// Architectures lists the CPU architectures supported by the release (e.g., amd64, i386).
 	Architectures list.SpaceDelimited[arch.Arch]
-	// Components lists the components available in the release.
+	// Components lists the repository components available in the release (e.g., main, contrib, non-free).
 	Components list.SpaceDelimited[string]
-	// Description is a description of the release.
+	// Description provides a brief description of the release.
 	Description string
-	// SHA256 lists SHA-256 checksums for files in the release.
+	// SHA256 lists SHA-256 checksums for files in the release, used for stronger integrity verification.
 	SHA256 list.NewLineDelimited[filehash.FileHash]
+	// AcquireByHash indicates if the release uses hash-based acquisition for file retrieval.
+	AcquireByHash *boolean.Boolean `json:"Acquire-By-Hash,omitempty"`
+	// SignedBy lists OpenPGP key fingerprints to be used for validating the next Release file.
+	SignedBy list.CommaDelimited[string] `json:"Signed-By,omitempty"`
 }
 
 // SHA256Sums returns a map of SHA-256 checksums for files in the release.
