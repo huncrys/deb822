@@ -21,8 +21,8 @@ import (
 
 // Package represents a Debian package.
 type Package struct {
-	// Package is the name of the package.
-	Package string
+	// Name is the name of the package.
+	Name string `json:"Package"`
 	// Source is the source package name.
 	Source string
 	// Version is the version of the package.
@@ -94,12 +94,12 @@ type Package struct {
 
 // ID returns a unique identifier for the package.
 func (p Package) ID() string {
-	return p.Package + "_" + p.Version.String() + "_" + p.Architecture.String()
+	return p.Name + "_" + p.Version.String() + "_" + p.Architecture.String()
 }
 
 func (a Package) Compare(b Package) int {
 	// Compare package names.
-	if cmp := strings.Compare(a.Package, b.Package); cmp != 0 {
+	if cmp := strings.Compare(a.Name, b.Name); cmp != 0 {
 		return cmp
 	}
 

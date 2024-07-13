@@ -45,7 +45,7 @@ func TestPackage(t *testing.T) {
 	require.Len(t, packageList, 1324)
 
 	expected := types.Package{
-		Package:       "0ad",
+		Name:          "0ad",
 		Version:       version.MustParse("0.0.26-3"),
 		InstalledSize: 28591,
 		Maintainer:    "Debian Games Team <pkg-games-devel@lists.alioth.debian.org>",
