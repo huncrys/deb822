@@ -34,7 +34,10 @@ package deb822_test
 import (
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/ProtonMail/go-crypto/openpgp/packet"
 	"github.com/dpeckett/deb822"
 	"github.com/dpeckett/deb822/types/dependency"
 	"github.com/dpeckett/deb822/types/version"
@@ -60,13 +63,18 @@ func TestEncode(t *testing.T) {
 		Dependency: dependency.MustParse("foo, bar (>= 2.0) [amd64] | baz"),
 	}
 
-	var sb strings.Builder
-	encoder := deb822.NewEncoder(&sb)
+	t.Run("Unsigned", func(t *testing.T) {
+		var sb strings.Builder
+		encoder, err := deb822.NewEncoder(&sb, nil)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, encoder.Close())
+		})
 
-	require.NoError(t, encoder.Encode(a))
-	require.NoError(t, encoder.Encode(b))
+		require.NoError(t, encoder.Encode(a))
+		require.NoError(t, encoder.Encode(b))
 
-	expected := `Foo: Hello
+		expected := `Foo: Hello
 Version: 1.0-1
 Dependency: foo, bar [amd64] (>= 1.0) | baz
 
@@ -75,5 +83,32 @@ Version: 1.0-1
 Dependency: foo, bar [amd64] (>= 2.0) | baz
 `
 
-	require.Equal(t, expected, sb.String())
+		require.Equal(t, expected, sb.String())
+	})
+
+	t.Run("Signed", func(t *testing.T) {
+		entityConfig := packet.Config{
+			RSABits: 1024, // insecure for testing
+			Time:    time.Now,
+		}
+
+		entity, err := openpgp.NewEntity("test", "", "", &entityConfig)
+		require.NoError(t, err)
+
+		var sb strings.Builder
+		encoder, err := deb822.NewEncoder(&sb, entity)
+		require.NoError(t, err)
+
+		require.NoError(t, encoder.Encode(a))
+		require.NoError(t, encoder.Encode(b))
+
+		// Close the encoder to finalize the signature.
+		require.NoError(t, encoder.Close())
+
+		signedMessage := sb.String()
+		require.Contains(t, signedMessage, "BEGIN PGP SIGNATURE")
+		require.Contains(t, signedMessage, "Foo: Hello")
+		require.Contains(t, signedMessage, "Foo: World")
+		require.Contains(t, signedMessage, "END PGP SIGNATURE")
+	})
 }

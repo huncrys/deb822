@@ -34,8 +34,12 @@ package deb822
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"reflect"
+
+	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
 )
 
 // Marshal is a one-off interface to serialize a single object to a writer.
@@ -47,7 +51,11 @@ import (
 // Given a struct (or list of structs), write to the io.Writer stream
 // in the RFC822-alike Debian control-file format
 func Marshal(writer io.Writer, data any) error {
-	encoder := NewEncoder(writer)
+	encoder, err := NewEncoder(writer, nil)
+	if err != nil {
+		return err
+	}
+
 	return encoder.Encode(data)
 }
 
@@ -64,15 +72,42 @@ func Marshal(writer io.Writer, data any) error {
 // when you call Marshal.
 type Encoder struct {
 	writer         io.Writer
+	close          func() error
 	alreadyWritten bool
 }
 
 // Create a new Encoder, which is configured to write to the given `io.Writer`.
-func NewEncoder(writer io.Writer) *Encoder {
-	return &Encoder{
-		writer:         writer,
-		alreadyWritten: false,
+// Optionally, you can pass in a private key to sign the output with.
+func NewEncoder(writer io.Writer, privateKey *openpgp.Entity) (*Encoder, error) {
+	var clearsignWriter io.WriteCloser
+	if privateKey != nil {
+		var err error
+		clearsignWriter, err = clearsign.Encode(writer, privateKey.PrivateKey, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create clearsign writer: %w", err)
+		}
+
+		writer = clearsignWriter
 	}
+
+	return &Encoder{
+		writer: writer,
+		close: func() error {
+			if privateKey != nil {
+				if err := clearsignWriter.Close(); err != nil {
+					return fmt.Errorf("failed to close clearsign writer: %w", err)
+				}
+			}
+
+			return nil
+		},
+		alreadyWritten: false,
+	}, nil
+}
+
+// Close the Encoder, flushing the buffer and closing the underlying io.Writer.
+func (e *Encoder) Close() error {
+	return e.close()
 }
 
 // Take a Struct, Encode it into a stanza, and write that out to the
