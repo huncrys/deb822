@@ -1,6 +1,6 @@
 # deb822
 
-A Go [serdes](https://en.wikipedia.org/wiki/SerDes) library for Debian 
+A Go [SerDes](https://en.wikipedia.org/wiki/SerDes) library for Debian 
 [deb822](https://www.debian.org/doc/debian-policy/ch-controlfields.html) encoding.
 
 ## Credits
