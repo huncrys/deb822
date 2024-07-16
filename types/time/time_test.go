@@ -35,6 +35,6 @@ func TestTime(t *testing.T) {
 		var tm time.Time
 		require.NoError(t, tm.UnmarshalText([]byte(text)))
 
-		require.Zero(t, stdtime.Date(2024, stdtime.February, 10, 11, 7, 25, 0, stdtime.UTC).Compare(stdtime.Time(tm)))
+		require.Equal(t, stdtime.Date(2024, stdtime.February, 10, 11, 7, 25, 0, stdtime.UTC), stdtime.Time(tm))
 	})
 }
