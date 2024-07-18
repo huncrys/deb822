@@ -1,10 +1,10 @@
 module github.com/dpeckett/deb822
 
-go 1.22.0
+go 1.21
 
 require (
 	github.com/ProtonMail/go-crypto v1.0.0
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.8.1
 )
 
 require (
