@@ -28,7 +28,7 @@ type Package struct {
 	// Version is the version of the package.
 	Version version.Version
 	// InstalledSize is the estimated installed size of the package, in kilobytes.
-	InstalledSize int `json:"Installed-Size,omitempty,string"`
+	InstalledSize *int `json:"Installed-Size,omitempty,string"`
 	// Maintainer is the name and email address of the person or organization responsible for the package.
 	Maintainer string
 	// Architecture is the Debian machine architecture the package is built for.

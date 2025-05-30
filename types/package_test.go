@@ -44,10 +44,12 @@ func TestPackage(t *testing.T) {
 
 	require.Len(t, packageList, 1324)
 
+	expectedInstalledSize := 28591
+
 	expected := types.Package{
 		Name:          "0ad",
 		Version:       version.MustParse("0.0.26-3"),
-		InstalledSize: 28591,
+		InstalledSize: &expectedInstalledSize,
 		Maintainer:    "Debian Games Team <pkg-games-devel@lists.alioth.debian.org>",
 		Architecture:  arch.MustParse("amd64"),
 		Depends:       dependency.MustParse("0ad-data (>= 0.0.26), 0ad-data (<= 0.0.26-3), 0ad-data-common (>= 0.0.26), 0ad-data-common (<= 0.0.26-3), libboost-filesystem1.74.0 (>= 1.74.0), libc6 (>= 2.34), libcurl3-gnutls (>= 7.32.0), libenet7, libfmt9 (>= 9.1.0+ds1), libfreetype6 (>= 2.2.1), libgcc-s1 (>= 3.4), libgloox18 (>= 1.0.24), libicu72 (>= 72.1~rc-1~), libminiupnpc17 (>= 1.9.20140610), libopenal1 (>= 1.14), libpng16-16 (>= 1.6.2-1), libsdl2-2.0-0 (>= 2.0.12), libsodium23 (>= 1.0.14), libstdc++6 (>= 12), libvorbisfile3 (>= 1.1.2), libwxbase3.2-1 (>= 3.2.1+dfsg), libwxgtk-gl3.2-1 (>= 3.2.1+dfsg), libwxgtk3.2-1 (>= 3.2.1+dfsg-2), libx11-6, libxml2 (>= 2.9.0), zlib1g (>= 1:1.2.0)"),
