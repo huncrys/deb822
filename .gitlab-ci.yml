@@ -1,0 +1,19 @@
+stages:
+  - test
+
+variables:
+  FF_DISABLE_UMASK_FOR_DOCKER_EXECUTOR: "true"
+
+default:
+  image:
+    name: $CI_REGISTRY/images/goreleaser:stable
+    entrypoint: [""]
+
+test:
+  stage: test
+  script:
+    - gotestsum --junitfile report.xml --format testname
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
