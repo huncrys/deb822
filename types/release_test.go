@@ -14,9 +14,9 @@ import (
 	"testing"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
-	"github.com/dpeckett/deb822"
-	"github.com/dpeckett/deb822/types"
 	"github.com/stretchr/testify/require"
+	"oaklab.hu/debian/deb822"
+	"oaklab.hu/debian/deb822/types"
 )
 
 func TestRelease(t *testing.T) {

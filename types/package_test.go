@@ -16,12 +16,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dpeckett/deb822"
-	"github.com/dpeckett/deb822/types"
-	"github.com/dpeckett/deb822/types/arch"
-	"github.com/dpeckett/deb822/types/dependency"
-	"github.com/dpeckett/deb822/types/version"
 	"github.com/stretchr/testify/require"
+	"oaklab.hu/debian/deb822"
+	"oaklab.hu/debian/deb822/types"
+	"oaklab.hu/debian/deb822/types/arch"
+	"oaklab.hu/debian/deb822/types/dependency"
+	"oaklab.hu/debian/deb822/types/version"
 )
 
 func TestPackage(t *testing.T) {

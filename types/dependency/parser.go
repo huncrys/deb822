@@ -38,8 +38,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/dpeckett/deb822/types/arch"
-	"github.com/dpeckett/deb822/types/version"
+	"oaklab.hu/debian/deb822/types/arch"
+	"oaklab.hu/debian/deb822/types/version"
 )
 
 // Parse a string into a Dependency object. The input should look something

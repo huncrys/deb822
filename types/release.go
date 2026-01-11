@@ -12,11 +12,11 @@ package types
 import (
 	"encoding/hex"
 
-	"github.com/dpeckett/deb822/types/arch"
-	"github.com/dpeckett/deb822/types/boolean"
-	"github.com/dpeckett/deb822/types/filehash"
-	"github.com/dpeckett/deb822/types/list"
-	"github.com/dpeckett/deb822/types/time"
+	"oaklab.hu/debian/deb822/types/arch"
+	"oaklab.hu/debian/deb822/types/boolean"
+	"oaklab.hu/debian/deb822/types/filehash"
+	"oaklab.hu/debian/deb822/types/list"
+	"oaklab.hu/debian/deb822/types/time"
 )
 
 // Release represents a Debian release with its associated metadata.

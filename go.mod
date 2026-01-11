@@ -1,8 +1,8 @@
-module github.com/dpeckett/deb822
+module oaklab.hu/debian/deb822
 
 go 1.24.0
 
-toolchain go1.24.2
+toolchain go1.25.5
 
 require (
 	github.com/ProtonMail/go-crypto v1.3.0

@@ -14,7 +14,7 @@ import (
 
 	stdtime "time"
 
-	"github.com/dpeckett/deb822/types/time"
+	"oaklab.hu/debian/deb822/types/time"
 
 	"github.com/stretchr/testify/require"
 )

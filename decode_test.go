@@ -34,13 +34,13 @@ package deb822_test
 import (
 	"testing"
 
-	"github.com/dpeckett/deb822"
-	"github.com/dpeckett/deb822/types/arch"
-	"github.com/dpeckett/deb822/types/boolean"
-	"github.com/dpeckett/deb822/types/dependency"
-	"github.com/dpeckett/deb822/types/list"
-	"github.com/dpeckett/deb822/types/version"
 	"github.com/stretchr/testify/require"
+	"oaklab.hu/debian/deb822"
+	"oaklab.hu/debian/deb822/types/arch"
+	"oaklab.hu/debian/deb822/types/boolean"
+	"oaklab.hu/debian/deb822/types/dependency"
+	"oaklab.hu/debian/deb822/types/list"
+	"oaklab.hu/debian/deb822/types/version"
 )
 
 type Fnord struct {

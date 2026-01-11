@@ -37,8 +37,8 @@ import (
 	"testing"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
-	"github.com/dpeckett/deb822"
 	"github.com/stretchr/testify/require"
+	"oaklab.hu/debian/deb822"
 )
 
 func TestBasicStanzaReader(t *testing.T) {

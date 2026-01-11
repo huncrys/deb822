@@ -34,9 +34,9 @@ package dependency_test
 import (
 	"testing"
 
-	"github.com/dpeckett/deb822/types/dependency"
-	"github.com/dpeckett/deb822/types/version"
 	"github.com/stretchr/testify/require"
+	"oaklab.hu/debian/deb822/types/dependency"
+	"oaklab.hu/debian/deb822/types/version"
 )
 
 func TestSingleParse(t *testing.T) {

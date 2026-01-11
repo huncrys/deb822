@@ -13,8 +13,8 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/dpeckett/deb822/types/list"
 	"github.com/stretchr/testify/require"
+	"oaklab.hu/debian/deb822/types/list"
 )
 
 func TestCommaDelimited(t *testing.T) {

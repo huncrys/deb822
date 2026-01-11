@@ -38,10 +38,10 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/packet"
-	"github.com/dpeckett/deb822"
-	"github.com/dpeckett/deb822/types/dependency"
-	"github.com/dpeckett/deb822/types/version"
 	"github.com/stretchr/testify/require"
+	"oaklab.hu/debian/deb822"
+	"oaklab.hu/debian/deb822/types/dependency"
+	"oaklab.hu/debian/deb822/types/version"
 )
 
 type TestMarshalStruct struct {

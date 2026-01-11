@@ -12,8 +12,8 @@ package boolean_test
 import (
 	"testing"
 
-	"github.com/dpeckett/deb822/types/boolean"
 	"github.com/stretchr/testify/require"
+	"oaklab.hu/debian/deb822/types/boolean"
 )
 
 func TestBoolean(t *testing.T) {

@@ -45,8 +45,8 @@ package dependency
 import (
 	"strings"
 
-	"github.com/dpeckett/deb822/types/arch"
-	"github.com/dpeckett/deb822/types/version"
+	"oaklab.hu/debian/deb822/types/arch"
+	"oaklab.hu/debian/deb822/types/version"
 )
 
 // ArchSet models an architecture dependency restriction, commonly used to

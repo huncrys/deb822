@@ -12,11 +12,11 @@ package types
 import (
 	"strings"
 
-	"github.com/dpeckett/deb822/types/arch"
-	"github.com/dpeckett/deb822/types/boolean"
-	"github.com/dpeckett/deb822/types/dependency"
-	"github.com/dpeckett/deb822/types/list"
-	"github.com/dpeckett/deb822/types/version"
+	"oaklab.hu/debian/deb822/types/arch"
+	"oaklab.hu/debian/deb822/types/boolean"
+	"oaklab.hu/debian/deb822/types/dependency"
+	"oaklab.hu/debian/deb822/types/list"
+	"oaklab.hu/debian/deb822/types/version"
 )
 
 // Package represents a Debian package with all its metadata fields.

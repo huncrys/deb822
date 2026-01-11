@@ -42,8 +42,8 @@ package version_test
 import (
 	"testing"
 
-	"github.com/dpeckett/deb822/types/version"
 	"github.com/stretchr/testify/require"
+	"oaklab.hu/debian/deb822/types/version"
 )
 
 // Abbreviation for creating a new Version object.
