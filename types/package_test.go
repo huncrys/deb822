@@ -65,4 +65,5 @@ func TestPackage(t *testing.T) {
 	}
 
 	require.Equal(t, expected, packageList[0])
+	require.Equal(t, "2048-qt", packageList[5].CleanSource())
 }

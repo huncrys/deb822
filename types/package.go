@@ -92,6 +92,16 @@ func (p Package) ID() string {
 	return p.Name + "_" + p.Version.String() + "_" + p.Architecture.String()
 }
 
+func (p Package) CleanSource() string {
+	source := p.Source
+	// If the source has a version, lop it off.
+	if strings.Contains(source, "(") {
+		source = source[:strings.Index(source, "(")]
+	}
+
+	return strings.TrimSpace(source)
+}
+
 // Compare compares two packages by name, version, and architecture.
 // It returns an integer comparing the two packages lexicographically.
 func (a Package) Compare(b Package) int {
