@@ -543,7 +543,6 @@ func parseSource(in string, ret *Source) error {
 		if peek == ')' {
 			_, _, _ = reader.ReadRune()
 
-			fmt.Println("versionStr:", versionStr)
 			parsed, err := version.Parse(versionStr)
 			if err != nil {
 				return err
