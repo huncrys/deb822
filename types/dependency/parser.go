@@ -39,6 +39,7 @@ import (
 	"io"
 
 	"github.com/dpeckett/deb822/types/arch"
+	"github.com/dpeckett/deb822/types/version"
 )
 
 // Parse a string into a Dependency object. The input should look something
@@ -504,4 +505,56 @@ func parsePossibilityStage(reader *bufio.Reader, stageSet *StageSet) error {
 		next, _, _ := reader.ReadRune()
 		stage.Name += string(next)
 	}
+}
+
+func parseSource(in string, ret *Source) error {
+	reader := bufio.NewReader(bytes.NewReader([]byte(in)))
+
+	for {
+		eatWhitespace(reader)
+		peek, err := peekRune(reader)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil
+			}
+			return err
+		}
+
+		if peek == '(' {
+			_, _, _ = reader.ReadRune()
+			break
+		}
+
+		next, _, _ := reader.ReadRune()
+		ret.Name += string(next)
+	}
+
+	versionStr := ""
+	for {
+		eatWhitespace(reader)
+		peek, err := peekRune(reader)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil
+			}
+			return err
+		}
+
+		if peek == ')' {
+			_, _, _ = reader.ReadRune()
+
+			fmt.Println("versionStr:", versionStr)
+			parsed, err := version.Parse(versionStr)
+			if err != nil {
+				return err
+			}
+			ret.Version = &parsed
+			break
+		}
+
+		next, _, _ := reader.ReadRune()
+		versionStr += string(next)
+	}
+
+	return nil
 }

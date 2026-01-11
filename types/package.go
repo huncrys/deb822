@@ -24,7 +24,7 @@ type Package struct {
 	// Name is the name of the binary package.
 	Name string `json:"Package"`
 	// Source is the name of the source package from which this package is built.
-	Source string
+	Source *dependency.Source `json:",omitempty"`
 	// Version is the version of the package.
 	Version version.Version
 	// InstalledSize is the estimated installed size of the package, in kilobytes.
@@ -90,16 +90,6 @@ type Package struct {
 // ID returns a unique identifier for the package, combining the name, version, and architecture.
 func (p Package) ID() string {
 	return p.Name + "_" + p.Version.String() + "_" + p.Architecture.String()
-}
-
-func (p Package) CleanSource() string {
-	source := p.Source
-	// If the source has a version, lop it off.
-	if strings.Contains(source, "(") {
-		source = source[:strings.Index(source, "(")]
-	}
-
-	return strings.TrimSpace(source)
 }
 
 // Compare compares two packages by name, version, and architecture.

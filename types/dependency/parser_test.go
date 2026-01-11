@@ -35,6 +35,7 @@ import (
 	"testing"
 
 	"github.com/dpeckett/deb822/types/dependency"
+	"github.com/dpeckett/deb822/types/version"
 	"github.com/stretchr/testify/require"
 )
 
@@ -320,4 +321,38 @@ func TestInsaneRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, dep.String(), rtDep.String())
+}
+
+func TestSources(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected dependency.Source
+	}{
+		{
+			input: "source (1.0)",
+			expected: dependency.Source{
+				Name: "source",
+				Version: &version.Version{
+					Version: "1.0",
+				},
+			},
+		}, {
+			input: "source",
+			expected: dependency.Source{
+				Name:    "source",
+				Version: nil,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		var src dependency.Source
+		err := src.UnmarshalText([]byte(test.input))
+		require.NoError(t, err)
+		require.Equal(t, test.expected, src)
+
+		marshaled, err := src.MarshalText()
+		require.NoError(t, err)
+		require.Equal(t, test.input, string(marshaled))
+	}
 }

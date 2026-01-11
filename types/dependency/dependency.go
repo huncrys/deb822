@@ -197,3 +197,24 @@ func (dep Dependency) MarshalText() ([]byte, error) {
 func (dep *Dependency) UnmarshalText(text []byte) error {
 	return parseDependency(string(text), dep)
 }
+
+type Source struct {
+	Name    string
+	Version *version.Version
+}
+
+func (src Source) String() string {
+	if src.Version != nil {
+		return src.Name + " (" + src.Version.String() + ")"
+	}
+
+	return src.Name
+}
+
+func (src Source) MarshalText() ([]byte, error) {
+	return []byte(src.String()), nil
+}
+
+func (src *Source) UnmarshalText(text []byte) error {
+	return parseSource(string(text), src)
+}
