@@ -1,4 +1,0 @@
-#!/usr/bin/make -f
-
-%:
-	dh $@ --builddirectory=_build --buildsystem=golang
