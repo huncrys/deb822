@@ -75,7 +75,15 @@ type Package struct {
 	// Size is the size of the package file, in bytes.
 	Size int `json:",omitempty,string"`
 	// SHA256 is the SHA-256 checksum of the package file for integrity verification.
-	SHA256 string
+	SHA256 string `json:",omitempty"`
+	// DescriptionMD5 is the MD5 checksum of the package description for integrity verification.
+	DescriptionMD5 string `json:"Description-md5,omitempty"`
+	// MD5sum is the MD5 checksum of the package file for integrity verification.
+	MD5sum string `json:",omitempty"`
+	// SHA1 is the SHA-1 checksum of the package file for integrity verification.
+	SHA1 string `json:",omitempty"`
+	// SHA512 is the SHA-512 checksum of the package file for integrity verification.
+	SHA512 string `json:",omitempty"`
 
 	// Control fields used in the dpkg status file.
 
