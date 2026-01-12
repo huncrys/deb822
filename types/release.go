@@ -43,18 +43,32 @@ type Release struct {
 	Components list.SpaceDelimited[string]
 	// Description provides a brief description of the release.
 	Description string
+	// MD5Sum lists MD5 checksums for files in the release, used for integrity verification.
+	MD5Sum list.NewLineDelimited[filehash.FileHash] `json:",omitempty"`
+	// SHA1 lists SHA-1 checksums for files in the release, used for integrity verification.
+	SHA1 list.NewLineDelimited[filehash.FileHash] `json:",omitempty"`
 	// SHA256 lists SHA-256 checksums for files in the release, used for stronger integrity verification.
-	SHA256 list.NewLineDelimited[filehash.FileHash]
+	SHA256 list.NewLineDelimited[filehash.FileHash] `json:",omitempty"`
 	// AcquireByHash indicates if the release uses hash-based acquisition for file retrieval.
 	AcquireByHash *boolean.Boolean `json:"Acquire-By-Hash,omitempty"`
 	// SignedBy lists OpenPGP key fingerprints to be used for validating the next Release file.
 	SignedBy list.CommaDelimited[string] `json:"Signed-By,omitempty"`
+	// https://wiki.debian.org/DebianRepository/Format#No-Support-for-Architecture-all
+	NoSupportForArchitectureAll string `json:"No-Support-For-Architecture-all,omitempty"`
+	// Snapshots provides the URL to the snapshots for the release.
+	Snapshots string
+	// NotAutomatic indicates if the package manager should not install packages (or upgrade to newer versions)
+	// from this repository without explicit user consent.
+	NotAutomatic *boolean.Boolean `json:",omitempty"`
+	// ButAutomaticUpgrades indicates if the package manager should automatically install package upgrades from
+	// this repository, if the installed version of the package is higher than the version of the package in other
+	// sources (APT assigns priority 100).
+	ButAutomaticUpgrades *boolean.Boolean `json:",omitempty"`
 }
 
-// SHA256Sums returns a map of SHA-256 checksums for files in the release.
-func (r *Release) SHA256Sums() (map[string][]byte, error) {
+func sums(hashes list.NewLineDelimited[filehash.FileHash]) (map[string][]byte, error) {
 	ret := make(map[string][]byte)
-	for _, hash := range r.SHA256 {
+	for _, hash := range hashes {
 		var err error
 		ret[hash.Filename], err = hex.DecodeString(hash.Hash)
 		if err != nil {
@@ -62,4 +76,19 @@ func (r *Release) SHA256Sums() (map[string][]byte, error) {
 		}
 	}
 	return ret, nil
+}
+
+// MD5Sums returns a map of MD5 checksums for files in the release.
+func (r *Release) MD5Sums() (map[string][]byte, error) {
+	return sums(r.MD5Sum)
+}
+
+// SHA1Sums returns a map of SHA-1 checksums for files in the release.
+func (r *Release) SHA1Sums() (map[string][]byte, error) {
+	return sums(r.SHA1)
+}
+
+// SHA256Sums returns a map of SHA-256 checksums for files in the release.
+func (r *Release) SHA256Sums() (map[string][]byte, error) {
+	return sums(r.SHA256)
 }
