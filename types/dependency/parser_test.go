@@ -326,10 +326,12 @@ func TestInsaneRoundTrip(t *testing.T) {
 func TestSources(t *testing.T) {
 	tests := []struct {
 		input    string
+		output   string
 		expected dependency.Source
 	}{
 		{
-			input: "source (1.0)",
+			input:  "source (1.0)",
+			output: "source (1.0)",
 			expected: dependency.Source{
 				Name: "source",
 				Version: &version.Version{
@@ -337,10 +339,28 @@ func TestSources(t *testing.T) {
 				},
 			},
 		}, {
-			input: "source",
+			input:  "source",
+			output: "source",
 			expected: dependency.Source{
 				Name:    "source",
 				Version: nil,
+			},
+		}, {
+			input:  "source ",
+			output: "source",
+			expected: dependency.Source{
+				Name:    "source",
+				Version: nil,
+			},
+		}, {
+			input:  "source  (2.0-1)",
+			output: "source (2.0-1)",
+			expected: dependency.Source{
+				Name: "source",
+				Version: &version.Version{
+					Version:  "2.0",
+					Revision: "1",
+				},
 			},
 		},
 	}
@@ -353,6 +373,39 @@ func TestSources(t *testing.T) {
 
 		marshaled, err := src.MarshalText()
 		require.NoError(t, err)
-		require.Equal(t, test.input, string(marshaled))
+		require.Equal(t, test.output, string(marshaled))
 	}
+}
+
+func TestSourcesError(t *testing.T) {
+	invalidInputs := []string{
+		"source (1.0",
+		"source 1.0)",
+		"source (>= 1.0)",
+		"source ()",
+		"source (1.0) extra",
+	}
+
+	for _, input := range invalidInputs {
+		var src dependency.Source
+		err := src.UnmarshalText([]byte(input))
+		require.Error(t, err)
+	}
+}
+
+func TestMustParseValid(t *testing.T) {
+	dep := dependency.MustParse("foo")
+	require.Equal(t, "foo", dep.Relations[0].Possibilities[0].Name)
+}
+
+func TestMustParseInvalid(t *testing.T) {
+	require.Panics(t, func() {
+		dependency.MustParse("foo bar")
+	})
+}
+
+func TestMustParseComplex(t *testing.T) {
+	dep := dependency.MustParse("foo:amd64 [amd64] (>= 1.0), bar | baz")
+	require.Len(t, dep.Relations, 2)
+	require.Equal(t, "foo", dep.Relations[0].Possibilities[0].Name)
 }

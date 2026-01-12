@@ -509,9 +509,9 @@ func parsePossibilityStage(reader *bufio.Reader, stageSet *StageSet) error {
 
 func parseSource(in string, ret *Source) error {
 	reader := bufio.NewReader(bytes.NewReader([]byte(in)))
+	eatWhitespace(reader)
 
 	for {
-		eatWhitespace(reader)
 		peek, err := peekRune(reader)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
@@ -520,22 +520,35 @@ func parseSource(in string, ret *Source) error {
 			return err
 		}
 
-		if peek == '(' {
-			_, _, _ = reader.ReadRune()
-			break
+		if peek == ' ' || peek == '(' {
+			goto PARSE_NAME_DONE
 		}
 
 		next, _, _ := reader.ReadRune()
 		ret.Name += string(next)
 	}
 
+PARSE_NAME_DONE:
+	eatWhitespace(reader)
+
+	next, _, err := reader.ReadRune()
+	if err != nil {
+		if errors.Is(err, io.EOF) {
+			return nil
+		}
+		return err
+	}
+
+	if next != '(' {
+		return fmt.Errorf("expected '(', got '%c'", next)
+	}
+
 	versionStr := ""
 	for {
-		eatWhitespace(reader)
 		peek, err := peekRune(reader)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				return nil
+				return fmt.Errorf("reached EOF before Number finished: %w", err)
 			}
 			return err
 		}
@@ -553,6 +566,10 @@ func parseSource(in string, ret *Source) error {
 
 		next, _, _ := reader.ReadRune()
 		versionStr += string(next)
+	}
+
+	if _, err := peekRune(reader); !errors.Is(err, io.EOF) {
+		return fmt.Errorf("trailing garbage after Source version: %w", err)
 	}
 
 	return nil
