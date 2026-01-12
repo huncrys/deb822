@@ -94,4 +94,95 @@ func TestArchCompareAllAny(t *testing.T) {
 
 	require.False(t, all.Is(&wildcard))
 	require.False(t, wildcard.Is(&all))
+	require.False(t, wildcard.Is(&wildcard))
+}
+
+func TestMustParse(t *testing.T) {
+	a := arch.MustParse("amd64")
+
+	require.Equal(t, "amd64", a.CPU)
+	require.Equal(t, "gnu", a.ABI)
+	require.Equal(t, "linux", a.OS)
+
+	require.Panics(t, func() {
+		arch.MustParse("a-b-c-d")
+	})
+}
+func TestArchString(t *testing.T) {
+	tests := []struct {
+		name     string
+		arch     arch.Arch
+		expected string
+	}{
+		{
+			name:     "standard amd64",
+			arch:     arch.Arch{ABI: "gnu", OS: "linux", CPU: "amd64"},
+			expected: "amd64",
+		},
+		{
+			name:     "non-standard ABI",
+			arch:     arch.Arch{ABI: "musl", OS: "linux", CPU: "amd64"},
+			expected: "musl-amd64",
+		},
+		{
+			name:     "non-standard OS",
+			arch:     arch.Arch{ABI: "gnu", OS: "kfreebsd", CPU: "amd64"},
+			expected: "kfreebsd-amd64",
+		},
+		{
+			name:     "non-standard ABI and OS",
+			arch:     arch.Arch{ABI: "bsd", OS: "openbsd", CPU: "i386"},
+			expected: "bsd-openbsd-i386",
+		},
+		{
+			name:     "any wildcard",
+			arch:     arch.Arch{ABI: "any", OS: "any", CPU: "any"},
+			expected: "any",
+		},
+		{
+			name:     "all",
+			arch:     arch.Arch{ABI: "all", OS: "all", CPU: "all"},
+			expected: "all",
+		},
+		{
+			name:     "OS wildcard",
+			arch:     arch.Arch{ABI: "gnu", OS: "any", CPU: "amd64"},
+			expected: "amd64",
+		},
+		{
+			name:     "CPU only",
+			arch:     arch.Arch{ABI: "any", OS: "any", CPU: "arm64"},
+			expected: "arm64",
+		},
+		{
+			name:     "empty ABI with non-standard OS",
+			arch:     arch.Arch{ABI: "", OS: "kfreebsd", CPU: "amd64"},
+			expected: "kfreebsd-amd64",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.arch.String()
+			require.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestArchMarshalText(t *testing.T) {
+	a := arch.Arch{ABI: "gnu", OS: "linux", CPU: "amd64"}
+
+	text, err := a.MarshalText()
+	require.NoError(t, err)
+
+	require.Equal(t, "amd64", string(text))
+}
+
+func TestArchUnmarshalText(t *testing.T) {
+	var a arch.Arch
+
+	err := a.UnmarshalText([]byte("amd64"))
+	require.NoError(t, err)
+
+	require.Equal(t, arch.Arch{ABI: "gnu", OS: "linux", CPU: "amd64"}, a)
 }

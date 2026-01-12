@@ -122,7 +122,7 @@ func parseArchInto(ret *Arch, arch string) error {
 	* kfreebsd-any (implicitly any-kfreebsd-any)
 	* kfreebsd-amd64 (implicitly any-kfreebsd-any)
 	* bsd-openbsd-i386 */
-	flavors := strings.SplitN(arch, "-", 3)
+	flavors := strings.Split(arch, "-")
 	switch len(flavors) {
 	case 1:
 		flavor := flavors[0]
