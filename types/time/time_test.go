@@ -36,5 +36,7 @@ func TestTime(t *testing.T) {
 		require.NoError(t, tm.UnmarshalText([]byte(text)))
 
 		require.Equal(t, stdtime.Date(2024, stdtime.February, 10, 11, 7, 25, 0, stdtime.UTC), stdtime.Time(tm))
+
+		require.Error(t, tm.UnmarshalText([]byte("invalid date string")))
 	})
 }

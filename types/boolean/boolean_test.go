@@ -65,5 +65,12 @@ func TestBoolean(t *testing.T) {
 
 			require.False(t, bool(b))
 		})
+
+		t.Run("invalid", func(t *testing.T) {
+			var b boolean.Boolean
+			err := b.UnmarshalText([]byte("maybe"))
+
+			require.Error(t, err)
+		})
 	})
 }

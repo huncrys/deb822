@@ -251,7 +251,7 @@ func TestVersion(t *testing.T) {
 				a, b = v(0, "0", "00"), v(0, "00", "0")
 				require.Zero(t, a.Compare(b))
 
-				a, b = v(1, "2", "3"), v(1, "2", "3")
+				a, b = v(1, "2", "3"), v(1, "02", "03")
 				require.Zero(t, a.Compare(b))
 			})
 
@@ -261,10 +261,14 @@ func TestVersion(t *testing.T) {
 				a, b := v(0, "1", "1"), v(0, "2", "1")
 				require.NotZero(t, a.Compare(b))
 
-				a, b = v(0, "1", "1"), v(0, "1", "2")
+				a, b = v(0, "1", "1"), v(0, "1", "2.2")
 				require.NotZero(t, a.Compare(b))
 
 				a, b = v(0, "0", "0"), v(1, "0", "0")
+				require.Less(t, a.Compare(b), 0)
+				require.Greater(t, b.Compare(a), 0)
+
+				a, b = v(1, "1.0", "2a"), v(2, "1.a", "20")
 				require.Less(t, a.Compare(b), 0)
 				require.Greater(t, b.Compare(a), 0)
 			})
@@ -304,6 +308,64 @@ func TestVersion(t *testing.T) {
 				Version:  "1.0",
 				Revision: "1",
 			}.StringWithoutEpoch(), "StringWithoutEpoch() returned malformed Version with Epoch")
+		})
+	})
+
+	t.Run("Empty", func(t *testing.T) {
+		var v version.Version
+		require.True(t, v.Empty())
+
+		v.Epoch = 1
+		require.False(t, v.Empty())
+	})
+
+	t.Run("IsNative", func(t *testing.T) {
+		var v version.Version
+		require.True(t, v.IsNative())
+
+		v.Revision = "1"
+		require.False(t, v.IsNative())
+	})
+
+	t.Run("MarshalText", func(t *testing.T) {
+		v := version.Version{
+			Epoch:    1,
+			Version:  "1.0",
+			Revision: "1",
+		}
+
+		text, err := v.MarshalText()
+		require.NoError(t, err)
+
+		require.Equal(t, "1:1.0-1", string(text))
+	})
+
+	t.Run("UnmarshalText", func(t *testing.T) {
+		text := "1:1.0-1"
+
+		var v version.Version
+		require.NoError(t, v.UnmarshalText([]byte(text)))
+
+		require.Equal(t, version.Version{
+			Epoch:    1,
+			Version:  "1.0",
+			Revision: "1",
+		}, v)
+
+		require.Error(t, v.UnmarshalText([]byte("invalid version string")))
+	})
+
+	t.Run("MustParse", func(t *testing.T) {
+		v := version.MustParse("1:1.0-1")
+
+		require.Equal(t, version.Version{
+			Epoch:    1,
+			Version:  "1.0",
+			Revision: "1",
+		}, v)
+
+		require.Panics(t, func() {
+			version.MustParse("invalid version string")
 		})
 	})
 }

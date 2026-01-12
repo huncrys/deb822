@@ -53,6 +53,11 @@ func TestCommaDelimited(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, list.CommaDelimited[string]{"a", "b", "c"}, l)
+
+			err = l.UnmarshalText([]byte(","))
+			require.NoError(t, err)
+
+			require.Equal(t, list.CommaDelimited[string]{"a", "b", "c"}, l)
 		})
 	})
 
