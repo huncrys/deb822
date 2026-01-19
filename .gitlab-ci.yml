@@ -12,7 +12,7 @@ default:
 test:
   stage: test
   script:
-    - gotestsum --junitfile report.xml --format testname -- -coverprofile=coverage.out -covermode=count
+    - gotestsum --junitfile report.xml --format testname -- -coverprofile=coverage.out -covermode=count ./...
     - gocover-cobertura < coverage.out > coverage.xml
   artifacts:
     when: always
