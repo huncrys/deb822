@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+gitlab_urls:
+  api: https://oaklab.hu/api/v4
+  download: https://oaklab.hu
+  use_package_registry: true
+  use_job_token: true
+
+builds:
+  - skip: true
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - 'Merge pull request'
+      - 'Merge branch'
+      - 'go mod tidy'
