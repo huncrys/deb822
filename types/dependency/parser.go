@@ -32,12 +32,12 @@
 package dependency
 
 import (
-	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
 	"io"
 
+	"oaklab.hu/debian/deb822"
 	"oaklab.hu/debian/deb822/types/arch"
 	"oaklab.hu/debian/deb822/types/version"
 )
@@ -58,39 +58,13 @@ func MustParse(in string) Dependency {
 	return result
 }
 
-func peekRune(reader *bufio.Reader) (rune, error) {
-	r, _, err := reader.ReadRune()
-	if err != nil {
-		return -1, err
-	}
-	if err := reader.UnreadRune(); err != nil {
-		return r, err
-	}
-	return r, nil
-}
-
-func eatWhitespace(reader *bufio.Reader) {
-	for {
-		peek, err := peekRune(reader)
-		if err != nil {
-			return
-		}
-		switch peek {
-		case '\r', '\n', ' ', '\t':
-			_, _, _ = reader.ReadRune()
-			continue
-		}
-		break
-	}
-}
-
 func parseDependency(in string, ret *Dependency) error {
-	reader := bufio.NewReader(bytes.NewReader([]byte(in)))
+	reader := deb822.NewRuneReader(bytes.NewReader([]byte(in)))
 
-	eatWhitespace(reader) /* Clean out leading whitespace */
+	reader.DiscardSpace()
 
 	for {
-		peek, err := peekRune(reader)
+		peek, _, err := reader.PeekRune()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				return nil
@@ -100,8 +74,9 @@ func parseDependency(in string, ret *Dependency) error {
 
 		switch peek {
 		case ',': /* Next relation set */
-			_, _, _ = reader.ReadRune()
-			eatWhitespace(reader)
+			reader.DiscardRune()
+			reader.DiscardSpace()
+
 			continue
 		}
 
@@ -111,13 +86,13 @@ func parseDependency(in string, ret *Dependency) error {
 	}
 }
 
-func parseRelation(reader *bufio.Reader, dependency *Dependency) error {
-	eatWhitespace(reader) /* Clean out leading whitespace */
+func parseRelation(reader *deb822.RuneReader, dependency *Dependency) error {
+	reader.DiscardSpace()
 
 	ret := &Relation{Possibilities: []Possibility{}}
 
 	for {
-		peek, err := peekRune(reader)
+		peek, _, err := reader.PeekRune()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				goto PARSE_RELATION_DONE
@@ -129,8 +104,8 @@ func parseRelation(reader *bufio.Reader, dependency *Dependency) error {
 		case ',': /* Done with this relation! yay */
 			goto PARSE_RELATION_DONE
 		case '|': /* Next Possibility */
-			_, _, _ = reader.ReadRune()
-			eatWhitespace(reader)
+			reader.DiscardRune()
+			reader.DiscardSpace()
 			continue
 		}
 		if err := parsePossibility(reader, ret); err != nil {
@@ -143,10 +118,10 @@ PARSE_RELATION_DONE:
 	return nil
 }
 
-func parsePossibility(reader *bufio.Reader, relation *Relation) error {
-	eatWhitespace(reader) /* Clean out leading whitespace */
+func parsePossibility(reader *deb822.RuneReader, relation *Relation) error {
+	reader.DiscardSpace()
 
-	peek, err := peekRune(reader)
+	peek, _, err := reader.PeekRune()
 	if err != nil {
 		return err
 	}
@@ -167,7 +142,7 @@ func parsePossibility(reader *bufio.Reader, relation *Relation) error {
 	}
 
 	for {
-		peek, err := peekRune(reader)
+		peek, _, err := reader.PeekRune()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				goto PARSE_POSSIBILITY_DONE
@@ -177,6 +152,7 @@ func parsePossibility(reader *bufio.Reader, relation *Relation) error {
 
 		switch peek {
 		case ':':
+			reader.DiscardRune()
 			err := parseMultiarch(reader, ret)
 			if err != nil {
 				return err
@@ -192,8 +168,8 @@ func parsePossibility(reader *bufio.Reader, relation *Relation) error {
 			goto PARSE_POSSIBILITY_DONE
 		}
 		/* Not a control, let's append */
-		next, _, _ := reader.ReadRune()
-		ret.Name += string(next)
+		reader.DiscardRune()
+		ret.Name += string(peek)
 	}
 
 PARSE_POSSIBILITY_DONE:
@@ -204,10 +180,10 @@ PARSE_POSSIBILITY_DONE:
 	return nil
 }
 
-func parseSubstvar(reader *bufio.Reader, relation *Relation) error {
-	eatWhitespace(reader)
-	_, _, _ = reader.ReadRune() /* Assert ch == '$' */
-	_, _, _ = reader.ReadRune() /* Assert ch == '{' */
+func parseSubstvar(reader *deb822.RuneReader, relation *Relation) error {
+	reader.DiscardSpace()
+	reader.DiscardRune() /* Assert ch == '$' */
+	reader.DiscardRune() /* Assert ch == '{' */
 
 	ret := &Possibility{
 		Name:     "",
@@ -216,7 +192,7 @@ func parseSubstvar(reader *bufio.Reader, relation *Relation) error {
 	}
 
 	for {
-		peek, err := peekRune(reader)
+		peek, _, err := reader.PeekRune()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				return fmt.Errorf("reached EOF before Substvar finished: %w", err)
@@ -225,7 +201,7 @@ func parseSubstvar(reader *bufio.Reader, relation *Relation) error {
 		}
 
 		if peek == '}' {
-			_, _, _ = reader.ReadRune()
+			reader.DiscardRune()
 			relation.Possibilities = append(relation.Possibilities, *ret)
 			return nil
 		}
@@ -234,11 +210,10 @@ func parseSubstvar(reader *bufio.Reader, relation *Relation) error {
 	}
 }
 
-func parseMultiarch(reader *bufio.Reader, possi *Possibility) error {
-	_, _, _ = reader.ReadRune() /* mandated to be a : */
+func parseMultiarch(reader *deb822.RuneReader, possi *Possibility) error {
 	name := ""
 	for {
-		peek, err := peekRune(reader)
+		peek, _, err := reader.PeekRune()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				goto PARSE_MULTIARCH_DONE
@@ -250,8 +225,8 @@ func parseMultiarch(reader *bufio.Reader, possi *Possibility) error {
 		case ',', '|', ' ', '(', '[', '<':
 			goto PARSE_MULTIARCH_DONE
 		default:
-			next, _, _ := reader.ReadRune()
-			name += string(next)
+			reader.DiscardRune()
+			name += string(peek)
 		}
 	}
 
@@ -264,10 +239,10 @@ PARSE_MULTIARCH_DONE:
 	return nil
 }
 
-func parsePossibilityControllers(reader *bufio.Reader, possi *Possibility) error {
+func parsePossibilityControllers(reader *deb822.RuneReader, possi *Possibility) error {
 	for {
-		eatWhitespace(reader) /* Clean out leading whitespace */
-		peek, err := peekRune(reader)
+		reader.DiscardSpace()
+		peek, _, err := reader.PeekRune()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				return nil
@@ -307,9 +282,9 @@ func parsePossibilityControllers(reader *bufio.Reader, possi *Possibility) error
 	}
 }
 
-func parsePossibilityVersion(reader *bufio.Reader, possi *Possibility) error {
-	eatWhitespace(reader)
-	_, _, _ = reader.ReadRune() /* mandated to be ( */
+func parsePossibilityVersion(reader *deb822.RuneReader, possi *Possibility) error {
+	reader.DiscardSpace()
+	reader.DiscardRune() /* mandated to be ( */
 	version := VersionRelation{}
 
 	err := parsePossibilityOperator(reader, &version)
@@ -327,8 +302,8 @@ func parsePossibilityVersion(reader *bufio.Reader, possi *Possibility) error {
 	return nil
 }
 
-func parsePossibilityOperator(reader *bufio.Reader, version *VersionRelation) error {
-	eatWhitespace(reader)
+func parsePossibilityOperator(reader *deb822.RuneReader, version *VersionRelation) error {
+	reader.DiscardSpace()
 	leader, _, err := reader.ReadRune()
 	if err != nil {
 		if errors.Is(err, io.EOF) {
@@ -361,11 +336,11 @@ func parsePossibilityOperator(reader *bufio.Reader, version *VersionRelation) er
 	return fmt.Errorf("unknown Operator in Possibility Version modifier: %s", operator)
 }
 
-func parsePossibilityNumber(reader *bufio.Reader, version *VersionRelation) error {
-	eatWhitespace(reader)
+func parsePossibilityNumber(reader *deb822.RuneReader, version *VersionRelation) error {
+	reader.DiscardSpace()
 	versionStr := ""
 	for {
-		peek, err := peekRune(reader)
+		peek, _, err := reader.PeekRune()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				return fmt.Errorf("reached EOF before Number finished: %w", err)
@@ -377,20 +352,17 @@ func parsePossibilityNumber(reader *bufio.Reader, version *VersionRelation) erro
 			return version.Version.UnmarshalText([]byte(versionStr))
 		}
 
-		next, _, err := reader.ReadRune()
-		if err != nil {
-			return fmt.Errorf("error reading next rune: %w", err)
-		}
-		versionStr += string(next)
+		reader.DiscardRune()
+		versionStr += string(peek)
 	}
 }
 
-func parsePossibilityArchs(reader *bufio.Reader, possi *Possibility) error {
-	eatWhitespace(reader)
-	_, _, _ = reader.ReadRune() /* Assert ch == '[' */
+func parsePossibilityArchs(reader *deb822.RuneReader, possi *Possibility) error {
+	reader.DiscardSpace()
+	reader.DiscardRune() /* Assert ch == '[' */
 
 	for {
-		peek, err := peekRune(reader)
+		peek, _, err := reader.PeekRune()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				return fmt.Errorf("reached EOF before Arch list finished: %w", err)
@@ -399,7 +371,7 @@ func parsePossibilityArchs(reader *bufio.Reader, possi *Possibility) error {
 		}
 
 		if peek == ']' {
-			_, _, _ = reader.ReadRune()
+			reader.DiscardRune()
 			return nil
 		}
 
@@ -409,17 +381,17 @@ func parsePossibilityArchs(reader *bufio.Reader, possi *Possibility) error {
 	}
 }
 
-func parsePossibilityArch(reader *bufio.Reader, possi *Possibility) error {
-	eatWhitespace(reader)
+func parsePossibilityArch(reader *deb822.RuneReader, possi *Possibility) error {
+	reader.DiscardSpace()
 	name := ""
 
-	peek, err := peekRune(reader)
+	peek, _, err := reader.PeekRune()
 	if err != nil {
 		return err
 	}
 	hasNot := peek == '!'
 	if hasNot {
-		_, _, _ = reader.ReadRune() // '!'
+		reader.DiscardRune() // '!'
 	}
 	if len(possi.Architectures.Architectures) == 0 {
 		possi.Architectures.Not = hasNot
@@ -428,7 +400,7 @@ func parsePossibilityArch(reader *bufio.Reader, possi *Possibility) error {
 	}
 
 	for {
-		peek, err := peekRune(reader)
+		peek, _, err := reader.PeekRune()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				return fmt.Errorf("reached EOF before Arch list finished: %w", err)
@@ -447,18 +419,18 @@ func parsePossibilityArch(reader *bufio.Reader, possi *Possibility) error {
 			possi.Architectures.Architectures = append(possi.Architectures.Architectures, archObj)
 			return nil
 		}
-		next, _, _ := reader.ReadRune()
-		name += string(next)
+		reader.DiscardRune()
+		name += string(peek)
 	}
 }
 
-func parsePossibilityStageSet(reader *bufio.Reader, possi *Possibility) error {
-	eatWhitespace(reader)
-	_, _, _ = reader.ReadRune() /* Assert ch == '<' */
+func parsePossibilityStageSet(reader *deb822.RuneReader, possi *Possibility) error {
+	reader.DiscardSpace()
+	reader.DiscardRune() /* Assert ch == '<' */
 
 	stageSet := StageSet{}
 	for {
-		peek, err := peekRune(reader)
+		peek, _, err := reader.PeekRune()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				return fmt.Errorf("reached EOF before StageSet finished: %w", err)
@@ -467,7 +439,7 @@ func parsePossibilityStageSet(reader *bufio.Reader, possi *Possibility) error {
 		}
 
 		if peek == '>' {
-			_, _, _ = reader.ReadRune()
+			reader.DiscardRune()
 			possi.StageSets = append(possi.StageSets, stageSet)
 			return nil
 		}
@@ -478,12 +450,12 @@ func parsePossibilityStageSet(reader *bufio.Reader, possi *Possibility) error {
 	}
 }
 
-func parsePossibilityStage(reader *bufio.Reader, stageSet *StageSet) error {
-	eatWhitespace(reader)
+func parsePossibilityStage(reader *deb822.RuneReader, stageSet *StageSet) error {
+	reader.DiscardSpace()
 
 	stage := Stage{}
 	for {
-		peek, err := peekRune(reader)
+		peek, _, err := reader.PeekRune()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				return fmt.Errorf("reached EOF before Stage finished: %w", err)
@@ -493,26 +465,27 @@ func parsePossibilityStage(reader *bufio.Reader, stageSet *StageSet) error {
 
 		switch peek {
 		case '!':
-			_, _, _ = reader.ReadRune()
+			reader.DiscardRune()
 			if stage.Not {
 				return errors.New("double negation in Stage is not permitted")
 			}
 			stage.Not = !stage.Not
+			continue
 		case '>', ' ': /* Let our parent deal with both of these */
 			stageSet.Stages = append(stageSet.Stages, stage)
 			return nil
 		}
-		next, _, _ := reader.ReadRune()
-		stage.Name += string(next)
+		reader.DiscardRune()
+		stage.Name += string(peek)
 	}
 }
 
 func parseSource(in string, ret *Source) error {
-	reader := bufio.NewReader(bytes.NewReader([]byte(in)))
-	eatWhitespace(reader)
+	reader := deb822.NewRuneReader(bytes.NewReader([]byte(in)))
+	reader.DiscardSpace()
 
 	for {
-		peek, err := peekRune(reader)
+		peek, _, err := reader.PeekRune()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				return nil
@@ -524,12 +497,12 @@ func parseSource(in string, ret *Source) error {
 			goto PARSE_NAME_DONE
 		}
 
-		next, _, _ := reader.ReadRune()
-		ret.Name += string(next)
+		reader.DiscardRune()
+		ret.Name += string(peek)
 	}
 
 PARSE_NAME_DONE:
-	eatWhitespace(reader)
+	reader.DiscardSpace()
 
 	next, _, err := reader.ReadRune()
 	if err != nil {
@@ -545,7 +518,7 @@ PARSE_NAME_DONE:
 
 	versionStr := ""
 	for {
-		peek, err := peekRune(reader)
+		peek, _, err := reader.PeekRune()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				return fmt.Errorf("reached EOF before Number finished: %w", err)
@@ -554,7 +527,7 @@ PARSE_NAME_DONE:
 		}
 
 		if peek == ')' {
-			_, _, _ = reader.ReadRune()
+			reader.DiscardRune()
 
 			parsed, err := version.Parse(versionStr)
 			if err != nil {
@@ -564,11 +537,11 @@ PARSE_NAME_DONE:
 			break
 		}
 
-		next, _, _ := reader.ReadRune()
-		versionStr += string(next)
+		reader.DiscardRune()
+		versionStr += string(peek)
 	}
 
-	if _, err := peekRune(reader); !errors.Is(err, io.EOF) {
+	if _, err := reader.ReadByte(); !errors.Is(err, io.EOF) {
 		return fmt.Errorf("trailing garbage after Source version: %w", err)
 	}
 

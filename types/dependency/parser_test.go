@@ -268,6 +268,7 @@ func TestBadArch(t *testing.T) {
 
 func TestBadStages(t *testing.T) {
 	vers := []string{
+		"foo <stage1> <!!cross>",
 		"foo <stage1> <!cross",
 		"foo <stage1> <!cros",
 		"foo <stage1> <!cro",
