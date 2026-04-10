@@ -33,6 +33,9 @@ type Package struct {
 	Maintainer string
 	// Architecture is the Debian machine architecture the package is built for.
 	Architecture arch.Arch
+	// ArchitectureVariant is an optional field that specifies a variant of the architecture, such as amd64v3 for AMD64 with AVX-512 support.
+	// This field is used to distinguish between different variants of the same architecture.
+	ArchitectureVariant string `json:"Architecture-Variant,omitempty"`
 	// MultiArch is the multi-architecture field, specifying if the package can be installed alongside other architectures.
 	// Valid values are "same", "foreign", or the name of an architecture.
 	MultiArch string `json:"Multi-Arch"`
@@ -97,7 +100,13 @@ type Package struct {
 
 // ID returns a unique identifier for the package, combining the name, version, and architecture.
 func (p Package) ID() string {
-	return p.Name + "_" + p.Version.String() + "_" + p.Architecture.String()
+	result := p.Name + "_" + p.Version.String() + "_" + p.Architecture.String()
+
+	if p.ArchitectureVariant != "" {
+		result += "_" + p.ArchitectureVariant
+	}
+
+	return result
 }
 
 // Compare compares two packages by name, version, and architecture.
@@ -115,7 +124,7 @@ func (a Package) Compare(b Package) int {
 
 	// Compare architectures.
 	if a.Architecture.Is(&b.Architecture) || b.Architecture.Is(&a.Architecture) {
-		return 0
+		return strings.Compare(a.ArchitectureVariant, b.ArchitectureVariant)
 	}
 
 	return strings.Compare(a.Architecture.String(), b.Architecture.String())

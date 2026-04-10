@@ -100,6 +100,15 @@ SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
 Description-md5: d41d8cd98f00b204e9800998ecf8427e
 MD5sum: d41d8cd98f00b204e9800998ecf8427e
 
+Package: variant-package
+Version: 1.2.3-4
+Maintainer: Variant Maintainer <variant@example.com>
+Architecture: amd64
+Architecture-Variant: amd64v3
+Depends: sample-package (>= 1.2)
+Description: Sample package for testing
+Homepage: https://example.com/variant-package
+
 Package: another-package
 Source: source-package (1.0.0-1)
 Version: 0.9.8-1
@@ -125,7 +134,7 @@ Homepage: https://example.com/another-package
 	var packageList []types.Package
 	require.NoError(t, decoder.Decode(&packageList))
 
-	require.Len(t, packageList, 3)
+	require.Len(t, packageList, 4)
 
 	rtPackagesBuilder := &strings.Builder{}
 	encoder, err := deb822.NewEncoder(rtPackagesBuilder, nil)
@@ -198,6 +207,65 @@ func TestCompare(t *testing.T) {
 				Architecture: arch.MustParse("arm64"),
 			},
 			expect: -1,
+		},
+		{
+			a: types.Package{
+				Name:                "pkg",
+				Version:             version.MustParse("1.0-1"),
+				Architecture:        arch.MustParse("amd64"),
+				ArchitectureVariant: "amd64v1",
+			},
+			b: types.Package{
+				Name:                "pkg",
+				Version:             version.MustParse("1.0-1"),
+				Architecture:        arch.MustParse("amd64"),
+				ArchitectureVariant: "amd64v3",
+			},
+			expect: -1,
+		},
+		{
+			a: types.Package{
+				Name:         "pkg",
+				Version:      version.MustParse("1.0-1"),
+				Architecture: arch.MustParse("amd64"),
+			},
+			b: types.Package{
+				Name:                "pkg",
+				Version:             version.MustParse("1.0-1"),
+				Architecture:        arch.MustParse("amd64"),
+				ArchitectureVariant: "amd64v3",
+			},
+			expect: -1,
+		},
+		{
+			a: types.Package{
+				Name:                "pkg",
+				Version:             version.MustParse("1.0-1"),
+				Architecture:        arch.MustParse("amd64"),
+				ArchitectureVariant: "amd64v3",
+			},
+			b: types.Package{
+				Name:                "pkg",
+				Version:             version.MustParse("1.0-1"),
+				Architecture:        arch.MustParse("amd64"),
+				ArchitectureVariant: "amd64v2",
+			},
+			expect: 1,
+		},
+		{
+			a: types.Package{
+				Name:                "pkg",
+				Version:             version.MustParse("1.0-1"),
+				Architecture:        arch.MustParse("amd64"),
+				ArchitectureVariant: "amd64v3",
+			},
+			b: types.Package{
+				Name:                "pkg",
+				Version:             version.MustParse("1.0-1"),
+				Architecture:        arch.MustParse("amd64"),
+				ArchitectureVariant: "amd64v3",
+			},
+			expect: 0,
 		},
 	}
 
