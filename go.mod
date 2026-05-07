@@ -2,7 +2,7 @@ module oaklab.hu/debian/deb822
 
 go 1.24.0
 
-toolchain go1.26.2
+toolchain go1.26.3
 
 require (
 	github.com/ProtonMail/go-crypto v1.4.1
