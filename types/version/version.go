@@ -138,13 +138,28 @@ func parseInto(result *Version, input string) error {
 
 	colon := strings.Index(trimmed, ":")
 	if colon != -1 {
-		epoch, err := strconv.ParseInt(trimmed[:colon], 10, 64)
+		epochStr := trimmed[:colon]
+		if epochStr == "" {
+			return errors.New("epoch in version is empty")
+		}
+
+		// dpkg's C implementation uses strtol, which also accepts a leading sign,
+		// but Debian Policy 5.6.12 defines the epoch as digits only. We follow
+		// Policy and reject anything that is not a digit, so "+1:2" and "-1:2"
+		// are errors rather than epoch 1 and epoch -1.
+		if strings.IndexFunc(epochStr, func(c rune) bool { return !cisdigit(c) }) != -1 {
+			return errors.New("epoch in version is not a number")
+		}
+
+		// dpkg stores the epoch in an int, so anything above INT_MAX is refused.
+		epoch, err := strconv.ParseInt(epochStr, 10, 32)
 		if err != nil {
-			return fmt.Errorf("epoch: %v", err)
+			if errors.Is(err, strconv.ErrRange) {
+				return errors.New("epoch in version is too big")
+			}
+			return fmt.Errorf("epoch in version is not a number: %w", err)
 		}
-		if epoch < 0 {
-			return errors.New("epoch in version is negative")
-		}
+
 		result.Epoch = uint(epoch)
 	}
 
@@ -155,11 +170,18 @@ func parseInto(result *Version, input string) error {
 	if hyphen := strings.LastIndex(result.Version, "-"); hyphen != -1 {
 		result.Revision = result.Version[hyphen+1:]
 		result.Version = result.Version[:hyphen]
+
+		if len(result.Revision) == 0 {
+			return errors.New("revision number is empty")
+		}
 	}
 
-	if len(result.Version) > 0 && !unicode.IsDigit(rune(result.Version[0])) {
-		return errors.New("version number does not start with digit")
+	if len(result.Version) == 0 {
+		return errors.New("version number is empty")
 	}
+
+	// Note: dpkg only warns when the upstream version does not start with a
+	// digit, it does not reject the version, so neither do we.
 
 	if strings.IndexFunc(result.Version, func(c rune) bool {
 		return !cisdigit(c) && !cisalpha(c) && c != '.' && c != '-' && c != '+' && c != '~' && c != ':'

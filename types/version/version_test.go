@@ -66,10 +66,11 @@ func TestVersion(t *testing.T) {
 
 			require.Zero(t, a.Compare(b))
 
-			a, err = version.Parse("0:0-")
-			require.NoError(t, err)
-
-			require.Zero(t, a.Compare(b))
+			// An explicit but empty revision is rejected by dpkg.
+			// Verified against dpkg 1.22: `dpkg --compare-versions '0:0-' eq '0:0-'`
+			// fails with "revision number is empty".
+			_, err = version.Parse("0:0-")
+			require.ErrorContains(t, err, "revision number is empty")
 
 			b = v(0, "0", "0")
 			a, err = version.Parse("0:0-0")
@@ -218,8 +219,135 @@ func TestVersion(t *testing.T) {
 		})
 
 		t.Run("UpstreamVersionNotStartingWithADigit", func(t *testing.T) {
-			_, err := version.Parse("0:abc3-0")
-			require.Error(t, err)
+			// dpkg only warns about this, it does not reject the version.
+			// Verified against dpkg 1.22: `dpkg --compare-versions '0:abc3-0' eq '0:abc3-0'`
+			// warns but exits 0.
+			a, err := version.Parse("0:abc3-0")
+			require.NoError(t, err)
+
+			require.Equal(t, uint(0), a.Epoch)
+			require.Equal(t, "abc3", a.Version)
+			require.Equal(t, "0", a.Revision)
+			require.Equal(t, "abc3-0", a.String())
+		})
+
+		t.Run("EpochEdgeCases", func(t *testing.T) {
+			tests := []struct {
+				name    string
+				input   string
+				wantErr string
+				want    version.Version
+			}{
+				{
+					// Debian Policy 5.6.12 allows digits only, so a signed epoch
+					// is invalid even though dpkg's strtol would accept it.
+					name:    "LeadingPlusInEpoch",
+					input:   "+1:2",
+					wantErr: "epoch in version is not a number",
+				},
+				{
+					name:    "EmptyEpoch",
+					input:   ":1.0",
+					wantErr: "epoch in version is empty",
+				},
+				{
+					// Verified against dpkg 1.22: epochs are capped at INT_MAX.
+					name:    "EpochTooBig",
+					input:   "4294967296:1",
+					wantErr: "epoch in version is too big",
+				},
+				{
+					name:  "LeadingZeroEpoch",
+					input: "01:1",
+					want:  v(1, "1", ""),
+				},
+				{
+					// The plus sign is legal inside the upstream version.
+					name:  "PlusInUpstreamVersion",
+					input: "1:+2",
+					want:  v(1, "+2", ""),
+				},
+			}
+
+			for _, tt := range tests {
+				t.Run(tt.name, func(t *testing.T) {
+					a, err := version.Parse(tt.input)
+					if tt.wantErr != "" {
+						require.ErrorContains(t, err, tt.wantErr)
+						return
+					}
+
+					require.NoError(t, err)
+					require.Equal(t, tt.want, a)
+				})
+			}
+		})
+
+		t.Run("LeadingZeroEpochComparesEqual", func(t *testing.T) {
+			a, err := version.Parse("01:1")
+			require.NoError(t, err)
+
+			b, err := version.Parse("1:1")
+			require.NoError(t, err)
+
+			require.Zero(t, a.Compare(b))
+		})
+
+		t.Run("EmptyComponents", func(t *testing.T) {
+			tests := []struct {
+				name    string
+				input   string
+				wantErr string
+			}{
+				{
+					// Empty upstream version with a revision.
+					// Verified against dpkg 1.22: "version number is empty".
+					name:    "EmptyUpstreamVersion",
+					input:   "1:-1",
+					wantErr: "version number is empty",
+				},
+				{
+					// Verified against dpkg 1.22: "revision number is empty".
+					name:    "EmptyRevision",
+					input:   "1.0-",
+					wantErr: "revision number is empty",
+				},
+			}
+
+			for _, tt := range tests {
+				t.Run(tt.name, func(t *testing.T) {
+					_, err := version.Parse(tt.input)
+					require.ErrorContains(t, err, tt.wantErr)
+				})
+			}
+		})
+
+		t.Run("NonDigitLeadingVersions", func(t *testing.T) {
+			tests := []struct {
+				name  string
+				input string
+				want  version.Version
+			}{
+				{
+					name:  "Tilde",
+					input: "~foo",
+					want:  v(0, "~foo", ""),
+				},
+				{
+					name:  "Alpha",
+					input: "abc3-0",
+					want:  v(0, "abc3", "0"),
+				},
+			}
+
+			for _, tt := range tests {
+				t.Run(tt.name, func(t *testing.T) {
+					a, err := version.Parse(tt.input)
+					require.NoError(t, err)
+					require.Equal(t, tt.want, a)
+					require.Equal(t, tt.input, a.String())
+				})
+			}
 		})
 
 		t.Run("InvalidCharactersInUpstreamVersion", func(t *testing.T) {
