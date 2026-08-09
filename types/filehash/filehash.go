@@ -11,6 +11,8 @@ package filehash
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 )
 
 // FileHash is an entry found in a Debian Release file
@@ -29,6 +31,43 @@ func (h FileHash) MarshalText() ([]byte, error) {
 }
 
 func (h *FileHash) UnmarshalText(text []byte) error {
-	_, err := fmt.Sscanf(string(text), "%s %d %s", &h.Hash, &h.Size, &h.Filename)
-	return err
+	line := string(text)
+
+	hash, rest, ok := cutField(strings.TrimLeft(line, " "))
+	if !ok {
+		return fmt.Errorf("missing size field in file hash entry %q", line)
+	}
+
+	sizeStr, filename, ok := cutField(rest)
+	if !ok {
+		return fmt.Errorf("missing filename field in file hash entry %q", line)
+	}
+
+	size, err := strconv.ParseInt(sizeStr, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid size in file hash entry %q: %w", line, err)
+	}
+
+	if filename == "" {
+		return fmt.Errorf("missing filename field in file hash entry %q", line)
+	}
+
+	h.Hash = hash
+	h.Size = size
+	h.Filename = filename
+
+	return nil
+}
+
+// cutField splits off the first space delimited field of s. The returned
+// remainder has any repeated separator spaces stripped from its front, so that
+// the next field (or a verbatim trailing filename) starts at its first
+// character. Interior spaces of the remainder are left untouched.
+func cutField(s string) (field, rest string, ok bool) {
+	field, rest, ok = strings.Cut(s, " ")
+	if !ok {
+		return field, "", false
+	}
+
+	return field, strings.TrimLeft(rest, " "), true
 }
