@@ -33,7 +33,6 @@ package deb822
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -113,22 +112,13 @@ func (d *Decoder) decodeSlice(into reflect.Value) error {
 	return nil
 }
 
+// decodeStruct fills a struct from a Stanza, honouring the debian struct tags
+// (see TagKey).
 func decodeStruct(stanza Stanza, into reflect.Value) error {
 	// If we have a pointer, let's follow it.
 	if into.Type().Kind() == reflect.Ptr {
 		return decodeStruct(stanza, into.Elem())
 	}
 
-	// Marshal the stanza.
-	jsonData, err := json.Marshal(stanza)
-	if err != nil {
-		return err
-	}
-
-	// Unmarshal the JSON into the struct.
-	if err := json.Unmarshal(jsonData, into.Addr().Interface()); err != nil {
-		return err
-	}
-
-	return nil
+	return unmarshalStanza(stanza, into)
 }

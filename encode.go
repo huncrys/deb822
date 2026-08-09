@@ -32,7 +32,6 @@
 package deb822
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -148,7 +147,9 @@ func (e *Encoder) encodeStruct(data reflect.Value) error {
 		}
 	}
 
-	stanza, err := convertToStanza(data)
+	// Render the struct into a stanza, honouring the debian struct tags
+	// (see TagKey).
+	stanza, err := marshalStruct(data)
 	if err != nil {
 		return err
 	}
@@ -156,22 +157,4 @@ func (e *Encoder) encodeStruct(data reflect.Value) error {
 
 	_, err = stanza.WriteTo(e.writer)
 	return err
-}
-
-func convertToStanza(data reflect.Value) (*Stanza, error) {
-	if data.Type().Kind() != reflect.Struct {
-		return nil, errors.New("can only Decode a Struct")
-	}
-
-	jsonData, err := json.Marshal(data.Interface())
-	if err != nil {
-		return nil, err
-	}
-
-	var paragraph Stanza
-	if err := json.Unmarshal(jsonData, &paragraph); err != nil {
-		return nil, err
-	}
-
-	return &paragraph, nil
 }

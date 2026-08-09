@@ -22,48 +22,48 @@ import (
 // Release represents a Debian release with its associated metadata.
 type Release struct {
 	// Origin specifies the origin of the release, typically indicating the entity that created it.
-	Origin string
+	Origin string `debian:"Origin" json:"Origin"`
 	// Label provides a human-readable label for the release.
-	Label string
+	Label string `debian:"Label,omitempty" json:"Label,omitzero"`
 	// Suite indicates the suite (such as stable, testing, unstable) the release belongs to.
-	Suite string
+	Suite string `debian:"Suite" json:"Suite"`
 	// Version denotes the version number of the release.
-	Version string
+	Version string `debian:"Version,omitempty" json:"Version,omitzero"`
 	// Codename is the codename assigned to the release (e.g., "buster", "bullseye").
-	Codename string
+	Codename string `debian:"Codename" json:"Codename"`
 	// Changelogs provides the URL to the changelogs for the release, detailing changes and updates.
-	Changelogs string
+	Changelogs string `debian:"Changelogs,omitempty" json:"Changelogs,omitzero"`
 	// Date is the timestamp indicating when the release was published.
-	Date time.Time
+	Date time.Time `debian:"Date" json:"Date"`
 	// ValidUntil specifies the date until which the release is considered valid. It is optional.
-	ValidUntil *time.Time `json:"Valid-Until,omitempty"`
+	ValidUntil *time.Time `debian:"Valid-Until,omitempty" json:"Valid-Until,omitzero"`
 	// Architectures lists the CPU architectures supported by the release (e.g., amd64, i386).
-	Architectures list.SpaceDelimited[arch.Arch]
+	Architectures list.SpaceDelimited[arch.Arch] `debian:"Architectures" json:"Architectures"`
 	// Components lists the repository components available in the release (e.g., main, contrib, non-free).
-	Components list.SpaceDelimited[string]
+	Components list.SpaceDelimited[string] `debian:"Components" json:"Components"`
 	// Description provides a brief description of the release.
-	Description string
+	Description string `debian:"Description,omitempty" json:"Description,omitzero"`
 	// MD5Sum lists MD5 checksums for files in the release, used for integrity verification.
-	MD5Sum list.NewLineDelimited[filehash.FileHash] `json:",omitempty"`
+	MD5Sum list.NewLineDelimited[filehash.FileHash] `debian:"MD5Sum,omitempty" json:"MD5Sum,omitzero"`
 	// SHA1 lists SHA-1 checksums for files in the release, used for integrity verification.
-	SHA1 list.NewLineDelimited[filehash.FileHash] `json:",omitempty"`
+	SHA1 list.NewLineDelimited[filehash.FileHash] `debian:"SHA1,omitempty" json:"SHA1,omitzero"`
 	// SHA256 lists SHA-256 checksums for files in the release, used for stronger integrity verification.
-	SHA256 list.NewLineDelimited[filehash.FileHash] `json:",omitempty"`
+	SHA256 list.NewLineDelimited[filehash.FileHash] `debian:"SHA256,omitempty" json:"SHA256,omitzero"`
 	// AcquireByHash indicates if the release uses hash-based acquisition for file retrieval.
-	AcquireByHash *boolean.Boolean `json:"Acquire-By-Hash,omitempty"`
+	AcquireByHash *boolean.Boolean `debian:"Acquire-By-Hash,omitempty" json:"Acquire-By-Hash,omitzero"`
 	// SignedBy lists OpenPGP key fingerprints to be used for validating the next Release file.
-	SignedBy list.CommaDelimited[string] `json:"Signed-By,omitempty"`
+	SignedBy list.CommaDelimited[string] `debian:"Signed-By,omitempty" json:"Signed-By,omitzero"`
 	// https://wiki.debian.org/DebianRepository/Format#No-Support-for-Architecture-all
-	NoSupportForArchitectureAll string `json:"No-Support-For-Architecture-all,omitempty"`
+	NoSupportForArchitectureAll string `debian:"No-Support-For-Architecture-all,omitempty" json:"No-Support-For-Architecture-all,omitzero"`
 	// Snapshots provides the URL to the snapshots for the release.
-	Snapshots string
+	Snapshots string `debian:"Snapshots,omitempty" json:"Snapshots,omitzero"`
 	// NotAutomatic indicates if the package manager should not install packages (or upgrade to newer versions)
 	// from this repository without explicit user consent.
-	NotAutomatic *boolean.Boolean `json:",omitempty"`
+	NotAutomatic *boolean.Boolean `debian:"NotAutomatic,omitempty" json:"NotAutomatic,omitzero"`
 	// ButAutomaticUpgrades indicates if the package manager should automatically install package upgrades from
 	// this repository, if the installed version of the package is higher than the version of the package in other
 	// sources (APT assigns priority 100).
-	ButAutomaticUpgrades *boolean.Boolean `json:",omitempty"`
+	ButAutomaticUpgrades *boolean.Boolean `debian:"ButAutomaticUpgrades,omitempty" json:"ButAutomaticUpgrades,omitzero"`
 }
 
 func sums(hashes list.NewLineDelimited[filehash.FileHash]) (map[string][]byte, error) {
