@@ -1,0 +1,16 @@
+This file maps each file available in the Debian GNU/Linux system to
+the package from which it originates.  It includes packages from the
+DIST distribution for the ARCH architecture.
+
+You can use this list to determine which package contains a specific
+file, or whether or not to install a package to obtain a particular
+file.
+
+Files are listed with their full path, relative to the root of the
+filesystem, and the packages providing them are listed with their
+section.
+
+FILE                                                    LOCATION
+bin/bash                                                shells/bash
+usr/bin/dpkg                                            admin/dpkg
+usr/share/doc/README.Debian                             admin/dpkg,admin/dpkg-dev

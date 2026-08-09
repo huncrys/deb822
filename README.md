@@ -7,6 +7,8 @@ Supported document types: binary package stanzas (`types.Package`), repository
 Release/InRelease files (`types.Release`), Sources index entries (`types.Source`),
 source control files (`types.Dsc`) and upload control files (`types.Changes`).
 OpenPGP clearsigned input is verified transparently when a keyring is supplied.
+The `contents` package additionally covers the archive's `Contents-*` indices,
+which are not deb822 documents.
 
 ## Struct tags
 
@@ -43,6 +45,39 @@ dec, err := deb822.NewDecoder(r, keyring, deb822.WithStrict())
 - Violations wrap the sentinel errors `ErrInvalidFieldName`,
   `ErrDuplicateField`, `ErrCommentNotAllowed` and `ErrUnexpectedContinuation`
   for use with `errors.Is`.
+
+## Contents indices
+
+`contents` reads and writes the `Contents-$arch` / `Contents-source` indices.
+These are not deb822 documents - they are a flat two-column table - but they are
+part of the same archive layout, and the `Release` file this library parses
+carries their hashes.
+
+```go
+r := contents.NewReader(gzipReader)
+for {
+    entry, err := r.Read()
+    if errors.Is(err, io.EOF) {
+        break
+    } else if err != nil {
+        return err
+    }
+    // entry.Path, entry.Packages ([[area/]section/]package)
+}
+```
+
+- Columns are split on the *last* whitespace run of the line: the separator has
+  no fixed width (dak pads to 55 columns with spaces, apt-ftparchive pads with
+  tabs) and real archives ship paths containing spaces.
+- `NewWriter` emits dak's binary layout by default; `WithPadding(0)` plus
+  `WithTabSeparator()` gives the `Contents-source` layout. Entries that could
+  not be read back unambiguously are rejected with `ErrInvalidPath` /
+  `ErrInvalidPackageList`.
+- The legacy prose header terminated by a `FILE LOCATION` line is skipped on
+  read and exposed via `Reader.Header()`; it is never written.
+- `ParseQualifiedName` splits the second column, tolerating names with and
+  without an area prefix.
+- Compression is the caller's business; both ends take plain streams.
 
 ## v0.8.0 changes
 

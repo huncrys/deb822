@@ -33,6 +33,22 @@ that decode/encode reaches a fixed point. Reordering struct fields changes
 output for every consumer; treat it as a breaking change. The `testdata/`
 files are real Debian archive snapshots and serve as ground truth.
 
+## Contents indices are not deb822
+
+`contents/` is the one package that does not parse stanzas. Its invariants come
+from the generators, not from a spec:
+
+- Split a line on the **last** whitespace run, never the first. dak pads the
+  path to 55 columns with spaces (`%-55s %s`), dak's Contents-source writer uses
+  a lone tab, apt-ftparchive pads with tabs, and `testdata/Contents-all` really
+  does contain paths with spaces that are exactly 55 columns wide - the
+  separator degenerates to a single space there.
+- Qualified names are `[[area/]section/]package`; Debian and Ubuntu both emit
+  the three-component form, so nothing may assume two.
+- `TestWriteIsByteStable` pins that decode/encode of the real dak file
+  reproduces it byte for byte. The writer never emits the legacy prose header.
+- Compression stays out of the package: both ends take plain streams.
+
 ## Struct tags
 
 Serialization uses the `debian:` tag (`debian:"Field-Name[,omitempty][,inline]"`),
