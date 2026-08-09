@@ -49,12 +49,14 @@ type Release struct {
 	SHA1 list.NewLineDelimited[filehash.FileHash] `debian:"SHA1,omitempty" json:"SHA1,omitzero"`
 	// SHA256 lists SHA-256 checksums for files in the release, used for stronger integrity verification.
 	SHA256 list.NewLineDelimited[filehash.FileHash] `debian:"SHA256,omitempty" json:"SHA256,omitzero"`
+	// SHA512 lists SHA-512 checksums for files in the release, used for stronger integrity verification.
+	SHA512 list.NewLineDelimited[filehash.FileHash] `debian:"SHA512,omitempty" json:"SHA512,omitzero"`
 	// AcquireByHash indicates if the release uses hash-based acquisition for file retrieval.
 	AcquireByHash *boolean.Boolean `debian:"Acquire-By-Hash,omitempty" json:"Acquire-By-Hash,omitzero"`
 	// SignedBy lists OpenPGP key fingerprints to be used for validating the next Release file.
 	SignedBy list.CommaDelimited[string] `debian:"Signed-By,omitempty" json:"Signed-By,omitzero"`
 	// https://wiki.debian.org/DebianRepository/Format#No-Support-for-Architecture-all
-	NoSupportForArchitectureAll string `debian:"No-Support-For-Architecture-all,omitempty" json:"No-Support-For-Architecture-all,omitzero"`
+	NoSupportForArchitectureAll string `debian:"No-Support-for-Architecture-all,omitempty" json:"No-Support-for-Architecture-all,omitzero"`
 	// Snapshots provides the URL to the snapshots for the release.
 	Snapshots string `debian:"Snapshots,omitempty" json:"Snapshots,omitzero"`
 	// NotAutomatic indicates if the package manager should not install packages (or upgrade to newer versions)
@@ -91,4 +93,9 @@ func (r *Release) SHA1Sums() (map[string][]byte, error) {
 // SHA256Sums returns a map of SHA-256 checksums for files in the release.
 func (r *Release) SHA256Sums() (map[string][]byte, error) {
 	return sums(r.SHA256)
+}
+
+// SHA512Sums returns a map of SHA-512 checksums for files in the release.
+func (r *Release) SHA512Sums() (map[string][]byte, error) {
+	return sums(r.SHA512)
 }

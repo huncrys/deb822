@@ -12,6 +12,7 @@ package types_test
 import (
 	"encoding/hex"
 	"os"
+	"strings"
 	"testing"
 
 	stdtime "time"
@@ -100,6 +101,86 @@ func TestRelease(t *testing.T) {
 	}, release.SHA256[1])
 }
 
+// encodeRelease renders a release the way the deb822 encoder would.
+func encodeRelease(t *testing.T, release types.Release) string {
+	t.Helper()
+
+	builder := &strings.Builder{}
+
+	encoder, err := deb822.NewEncoder(builder, nil)
+	require.NoError(t, err)
+
+	require.NoError(t, encoder.Encode(release))
+
+	return builder.String()
+}
+
+// TestReleaseSHA512RoundTrip covers the SHA512 checksum list, which the sample
+// Release file does not carry.
+func TestReleaseSHA512RoundTrip(t *testing.T) {
+	release := types.Release{
+		Origin:        "Debian",
+		Suite:         "stable",
+		Codename:      "bookworm",
+		Date:          time.Time(stdtime.Date(2024, stdtime.February, 10, 11, 7, 25, 0, stdtime.UTC)),
+		Architectures: list.SpaceDelimited[arch.Arch]{arch.MustParse("amd64")},
+		Components:    list.SpaceDelimited[string]{"main"},
+		SHA512: list.NewLineDelimited[filehash.FileHash]{
+			{
+				Hash:     "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e",
+				Size:     1484322,
+				Filename: "contrib/Contents-all",
+			},
+			{
+				Hash:     "9b71d224bd62f3785d96d46ad3ea3d73319bfbc2890caadae2dff72519673ca72323c3d99ba5c11d7c7acc6e14b8c5da0c4663475c2e5c3adef46f73bcdec043",
+				Size:     98581,
+				Filename: "contrib/Contents-all.gz",
+			},
+		},
+	}
+
+	encoded := encodeRelease(t, release)
+	require.Contains(t, encoded, "SHA512:")
+	require.Contains(t, encoded, " cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e 1484322 contrib/Contents-all\n")
+
+	decoder, err := deb822.NewDecoder(strings.NewReader(encoded), nil)
+	require.NoError(t, err)
+
+	var decoded types.Release
+	require.NoError(t, decoder.Decode(&decoded))
+
+	require.Equal(t, release, decoded)
+}
+
+// TestReleaseNoSupportForArchitectureAllSpelling pins the field name spelled
+// out by the repository format specification, which lower cases the "for".
+func TestReleaseNoSupportForArchitectureAllSpelling(t *testing.T) {
+	release := types.Release{
+		Origin:                      "Debian",
+		Suite:                       "stable",
+		Codename:                    "bookworm",
+		Date:                        time.Time(stdtime.Date(2024, stdtime.February, 10, 11, 7, 25, 0, stdtime.UTC)),
+		Architectures:               list.SpaceDelimited[arch.Arch]{arch.MustParse("amd64")},
+		Components:                  list.SpaceDelimited[string]{"main"},
+		NoSupportForArchitectureAll: "Packages",
+	}
+
+	encoded := encodeRelease(t, release)
+
+	require.Contains(t, encoded, "No-Support-for-Architecture-all: Packages\n")
+	require.NotContains(t, encoded, "No-Support-For-Architecture-all")
+
+	// Decoding is case insensitive, so either spelling still parses.
+	for _, key := range []string{"No-Support-for-Architecture-all", "No-Support-For-Architecture-all"} {
+		decoder, err := deb822.NewDecoder(strings.NewReader(key+": Packages\n"), nil)
+		require.NoError(t, err)
+
+		var decoded types.Release
+		require.NoError(t, decoder.Decode(&decoded))
+		require.Equal(t, "Packages", decoded.NoSupportForArchitectureAll, "failed to decode %s", key)
+	}
+}
+
 func mustDecodeHex(t *testing.T, s string) []byte {
 	t.Helper()
 	b, err := hex.DecodeString(s)
@@ -145,6 +226,18 @@ func TestSums(t *testing.T) {
 				Filename: "contrib/Contents-all.gz",
 			},
 		},
+		SHA512: list.NewLineDelimited[filehash.FileHash]{
+			{
+				Hash:     "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e",
+				Size:     1484322,
+				Filename: "contrib/Contents-all",
+			},
+			{
+				Hash:     "9b71d224bd62f3785d96d46ad3ea3d73319bfbc2890caadae2dff72519673ca72323c3d99ba5c11d7c7acc6e14b8c5da0c4663475c2e5c3adef46f73bcdec043",
+				Size:     98581,
+				Filename: "contrib/Contents-all.gz",
+			},
+		},
 	}
 
 	expected := map[string][]byte{
@@ -175,6 +268,17 @@ func TestSums(t *testing.T) {
 	}
 
 	sums, err = release.SHA256Sums()
+	require.NoError(t, err)
+
+	require.Len(t, sums, 2)
+	require.Equal(t, expected, sums)
+
+	expected = map[string][]byte{
+		"contrib/Contents-all":    mustDecodeHex(t, "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e"),
+		"contrib/Contents-all.gz": mustDecodeHex(t, "9b71d224bd62f3785d96d46ad3ea3d73319bfbc2890caadae2dff72519673ca72323c3d99ba5c11d7c7acc6e14b8c5da0c4663475c2e5c3adef46f73bcdec043"),
+	}
+
+	sums, err = release.SHA512Sums()
 	require.NoError(t, err)
 
 	require.Len(t, sums, 2)

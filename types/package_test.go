@@ -20,7 +20,9 @@ import (
 	"oaklab.hu/debian/deb822"
 	"oaklab.hu/debian/deb822/types"
 	"oaklab.hu/debian/deb822/types/arch"
+	"oaklab.hu/debian/deb822/types/boolean"
 	"oaklab.hu/debian/deb822/types/dependency"
+	"oaklab.hu/debian/deb822/types/list"
 	"oaklab.hu/debian/deb822/types/version"
 )
 
@@ -144,6 +146,92 @@ Homepage: https://example.com/another-package
 
 	rtPackages := rtPackagesBuilder.String()
 	require.Equal(t, packages, rtPackages)
+}
+
+// TestRoundTripPolicyFields covers the Debian Policy and dpkg fields that are
+// not exercised by the sample archive data: they have to survive a decode and
+// come back out in the very same shape.
+func TestRoundTripPolicyFields(t *testing.T) {
+	packages := `Package: policy-package
+Version: 1.0-1
+Architecture: amd64
+Built-Using: grub2 (= 2.06-13), libssl (= 3.0.11-1)
+Static-Built-Using: golang-1.21 (= 1.21.4-1)
+Description: Package exercising the policy fields
+Origin: Debian
+Bugs: debbugs://bugs.debian.org
+Task: desktop, gnome-desktop
+Package-Type: udeb
+Build-Essential: yes
+Subarchitecture: mac
+Kernel-Version: 6.1.0-13-amd64
+Installer-Menu-Item: 4000
+`
+
+	decoder, err := deb822.NewDecoder(strings.NewReader(packages), nil)
+	require.NoError(t, err)
+
+	var packageList []types.Package
+	require.NoError(t, decoder.Decode(&packageList))
+
+	require.Len(t, packageList, 1)
+
+	pkg := packageList[0]
+	require.Equal(t, dependency.MustParse("grub2 (= 2.06-13), libssl (= 3.0.11-1)"), pkg.BuiltUsing)
+	require.Equal(t, dependency.MustParse("golang-1.21 (= 1.21.4-1)"), pkg.StaticBuiltUsing)
+	require.Equal(t, "Debian", pkg.Origin)
+	require.Equal(t, "debbugs://bugs.debian.org", pkg.Bugs)
+	require.Equal(t, list.CommaDelimited[string]{"desktop", "gnome-desktop"}, pkg.Task)
+	require.Equal(t, "udeb", pkg.PackageType)
+	require.NotNil(t, pkg.BuildEssential)
+	require.Equal(t, boolean.Boolean(true), *pkg.BuildEssential)
+	require.Equal(t, "mac", pkg.Subarchitecture)
+	require.Equal(t, "6.1.0-13-amd64", pkg.KernelVersion)
+	require.Equal(t, "4000", pkg.InstallerMenuItem)
+
+	rtPackagesBuilder := &strings.Builder{}
+	encoder, err := deb822.NewEncoder(rtPackagesBuilder, nil)
+	require.NoError(t, err)
+
+	require.NoError(t, encoder.Encode(packageList))
+
+	require.Equal(t, packages, rtPackagesBuilder.String())
+}
+
+// TestUnsetPolicyFieldsAreOmitted pins that a package leaving the optional
+// fields alone does not grow empty lines for them.
+func TestUnsetPolicyFieldsAreOmitted(t *testing.T) {
+	pkg := types.Package{
+		Name:         "plain-package",
+		Version:      version.MustParse("1.0-1"),
+		Architecture: arch.MustParse("amd64"),
+		Filename:     "pool/main/p/plain-package/plain-package_1.0-1_amd64.deb",
+	}
+
+	encodedBuilder := &strings.Builder{}
+	encoder, err := deb822.NewEncoder(encodedBuilder, nil)
+	require.NoError(t, err)
+
+	require.NoError(t, encoder.Encode([]types.Package{pkg}))
+
+	encoded := encodedBuilder.String()
+
+	for _, key := range []string{
+		"Built-Using",
+		"Static-Built-Using",
+		"Package-Type",
+		"Task",
+		"Origin",
+		"Bugs",
+		"Build-Essential",
+		"Subarchitecture",
+		"Kernel-Version",
+		"Installer-Menu-Item",
+	} {
+		require.NotContains(t, encoded, key+":", "unset %s was written out", key)
+	}
+
+	require.Contains(t, encoded, "Package: plain-package\n")
 }
 
 func TestCompare(t *testing.T) {

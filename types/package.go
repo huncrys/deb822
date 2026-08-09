@@ -57,22 +57,57 @@ type Package struct {
 	Suggests dependency.Dependency `debian:"Suggests,omitempty" json:"Suggests,omitzero"`
 	// PreDepends lists packages that must be installed and configured before this package.
 	PreDepends dependency.Dependency `debian:"Pre-Depends,omitempty" json:"Pre-Depends,omitzero"`
+	// BuiltUsing lists source packages whose source code was incorporated into this binary package during
+	// the build (Debian Policy 7.8). The archive uses it to keep those sources available for license
+	// compliance, so the versions listed are always strictly pinned with "(= version)".
+	BuiltUsing dependency.Dependency `debian:"Built-Using,omitempty" json:"Built-Using,omitzero"`
+	// StaticBuiltUsing lists source packages providing static build artifacts, such as statically linked
+	// libraries, that were incorporated into this binary package. Unlike Built-Using it carries no license
+	// obligation, it exists so the archive can tell which packages need a rebuild.
+	StaticBuiltUsing dependency.Dependency `debian:"Static-Built-Using,omitempty" json:"Static-Built-Using,omitzero"`
 	// Description provides a short description and a long description of the package.
 	Description string `debian:"Description,omitempty" json:"Description,omitzero"`
 	// Homepage is the URL of the package's homepage, typically where more information can be found.
 	Homepage string `debian:"Homepage,omitempty" json:"Homepage,omitzero"`
+	// Origin names the distribution the package originates from.
+	Origin string `debian:"Origin,omitempty" json:"Origin,omitzero"`
+	// Bugs is the URL of the bug tracking system for this package, in the form used by the reportbug tools
+	// (e.g. "debbugs://bugs.debian.org").
+	Bugs string `debian:"Bugs,omitempty" json:"Bugs,omitzero"`
 	// Tag lists tags associated with the package, separated by commas.
 	Tag list.CommaDelimited[string] `debian:"Tag,omitempty" json:"Tag,omitzero"`
+	// Task lists the tasks this package is part of, separated by commas. It is used by tasksel to group
+	// packages into installable tasks.
+	Task list.CommaDelimited[string] `debian:"Task,omitempty" json:"Task,omitzero"`
 	// Section categorizes the package within the Debian archive, such as "admin", "devel", or "x11".
 	Section string `debian:"Section,omitempty" json:"Section,omitzero"`
 	// Priority defines the importance of the package within the Debian system, such as "required", "standard", or "optional".
 	Priority string `debian:"Priority,omitempty" json:"Priority,omitzero"`
+	// PackageType is the type of the package, "deb" for a regular binary package (the default when absent)
+	// or "udeb" for a debian-installer package.
+	PackageType string `debian:"Package-Type,omitempty" json:"Package-Type,omitzero"`
 	// Essential indicates if the package is essential for the system to function. If true, the package cannot be removed.
 	Essential *boolean.Boolean `debian:"Essential,omitempty" json:"Essential,omitzero"`
 	// Important indicates if the package is important for the system to function. This is less strict than Essential.
 	Important *boolean.Boolean `debian:"Important,omitempty" json:"Important,omitzero"`
 	// Protected indicates if the package is protected, containing important system boot infrastructure.
 	Protected *boolean.Boolean `debian:"Protected,omitempty" json:"Protected,omitzero"`
+	// BuildEssential indicates if the package is part of the build-essential set, which build dependencies
+	// may assume to be present without declaring it.
+	BuildEssential *boolean.Boolean `debian:"Build-Essential,omitempty" json:"Build-Essential,omitzero"`
+
+	// Control fields used by debian-installer packages (udebs).
+
+	// Subarchitecture names the sub-architecture the package is restricted to, for architectures whose
+	// installer images differ per machine family.
+	Subarchitecture string `debian:"Subarchitecture,omitempty" json:"Subarchitecture,omitzero"`
+	// KernelVersion is the kernel version the package's modules are built against, restricting the
+	// installer kernels it can be used with.
+	KernelVersion string `debian:"Kernel-Version,omitempty" json:"Kernel-Version,omitzero"`
+	// InstallerMenuItem is the position of the package's entry in the debian-installer main menu, as a
+	// number; lower numbers are shown earlier.
+	InstallerMenuItem string `debian:"Installer-Menu-Item,omitempty" json:"Installer-Menu-Item,omitzero"`
+
 	// Filename is the name of the package file.
 	Filename string `debian:"Filename" json:"Filename"`
 	// Size is the size of the package file, in bytes.
