@@ -42,8 +42,8 @@ import (
 	"github.com/ProtonMail/go-crypto/openpgp"
 )
 
-func Unmarshal(data []byte, v any) error {
-	decoder, err := NewDecoder(bytes.NewReader(data), openpgp.EntityList{})
+func Unmarshal(data []byte, v any, opts ...ReaderOption) error {
+	decoder, err := NewDecoder(bytes.NewReader(data), openpgp.EntityList{}, opts...)
 	if err != nil {
 		return err
 	}
@@ -55,9 +55,9 @@ type Decoder struct {
 	stanzaReader StanzaReader
 }
 
-func NewDecoder(reader io.Reader, keyring openpgp.EntityList) (*Decoder, error) {
+func NewDecoder(reader io.Reader, keyring openpgp.EntityList, opts ...ReaderOption) (*Decoder, error) {
 	var ret Decoder
-	pr, err := NewStanzaReader(reader, keyring)
+	pr, err := NewStanzaReader(reader, keyring, opts...)
 	if err != nil {
 		return nil, err
 	}

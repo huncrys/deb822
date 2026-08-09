@@ -53,18 +53,24 @@ import (
 type StanzaReader struct {
 	reader *bufio.Reader
 	signer *openpgp.Entity
+	opts   readerOptions
 }
 
-// Create a new StanzaReader from the given `io.Reader`, and `keyring`.
-// if `keyring` is set to `nil`, this will result in all OpenPGP signature
-// checking being disabled. *including* that the contents match!
+// Create a new StanzaReader from the given `io.Reader`, `keyring` and options.
+//
+// Clearsigned input is *always* verified against `keyring`; there is no way to
+// skip the check. A `nil` or empty `keyring` therefore does not disable
+// verification, it merely guarantees that no signer can be found and that
+// clearsigned input fails with an OpenPGP error. Plain, unsigned input never
+// touches the keyring and is unaffected by its contents.
 //
 // Also keep in mind, `reader` may be consumed 100% in memory due to
 // the underlying OpenPGP API being hella fiddly.
-func NewStanzaReader(reader io.Reader, keyring openpgp.EntityList) (*StanzaReader, error) {
+func NewStanzaReader(reader io.Reader, keyring openpgp.EntityList, opts ...ReaderOption) (*StanzaReader, error) {
 	bufioReader := bufio.NewReader(reader)
 	pr := StanzaReader{
 		reader: bufioReader,
+		opts:   newReaderOptions(opts),
 	}
 
 	// OK. We have a document. Now, let's peek ahead and see if we've got an
@@ -105,6 +111,16 @@ func (pr *StanzaReader) All() ([]Stanza, error) {
 func (pr *StanzaReader) Next() (*Stanza, error) {
 	var paragraph Stanza
 	var lastKey string
+	var haveField bool
+
+	// Duplicate detection is only ever consulted in strict mode, so don't pay
+	// for the map otherwise.
+	var seen map[string]struct{}
+	if pr.opts.strict {
+		seen = make(map[string]struct{})
+	}
+
+	allowComments := pr.opts.allowComments()
 
 	for {
 		line, err := pr.reader.ReadString('\n')
@@ -135,6 +151,10 @@ func (pr *StanzaReader) Next() (*Stanza, error) {
 		}
 
 		if strings.HasPrefix(line, "#") {
+			if !allowComments {
+				return nil, fmt.Errorf("%w: '%s'", ErrCommentNotAllowed, strings.TrimRight(line, "\r\n"))
+			}
+
 			continue // skip comments
 		}
 
@@ -148,6 +168,12 @@ func (pr *StanzaReader) Next() (*Stanza, error) {
 		 */
 
 		if strings.HasPrefix(line, " ") || strings.HasPrefix(line, "\t") {
+			if !haveField {
+				// A continuation line has nothing to continue; without this
+				// guard we'd write into a nil map and panic.
+				return nil, fmt.Errorf("%w: '%s'", ErrUnexpectedContinuation, strings.TrimRight(line, "\r\n"))
+			}
+
 			/* This is a continuation line; so we're going to go ahead and
 			* clean it up, and throw it into the list. We're going to remove
 			* the first character (which we now know is whitespace), and if
@@ -181,9 +207,26 @@ func (pr *StanzaReader) Next() (*Stanza, error) {
 			return nil, fmt.Errorf("could not parse line: '%s'", line)
 		}
 
+		if pr.opts.strict && !validFieldName(els[0]) {
+			// Validate the raw text ahead of the colon, so that names padded
+			// with whitespace ("Key : value") are caught too.
+			return nil, fmt.Errorf("%w: '%s'", ErrInvalidFieldName, els[0])
+		}
+
 		// We'll go ahead and take off any leading spaces.
 		lastKey = strings.TrimSpace(els[0])
 		value := strings.TrimSpace(els[1])
+
+		if seen != nil {
+			// Policy 5.1: field names are case-insensitive.
+			folded := strings.ToLower(lastKey)
+			if _, found := seen[folded]; found {
+				return nil, fmt.Errorf("%w: '%s'", ErrDuplicateField, lastKey)
+			}
+			seen[folded] = struct{}{}
+		}
+
+		haveField = true
 
 		paragraph.Set(lastKey, value)
 	}
