@@ -43,10 +43,12 @@
 //
 // The trailer date is decoded through the module's [time.Time], which accepts
 // the layouts that turn up in the archive - space padded and unpadded days
-// among them - and re-emits an RFC1123 date with a numeric zone, which is what
-// dpkg requires. A changelog written before that convention settled therefore
-// does not round trip byte for byte; reformatting it once reaches a fixed point
-// that does.
+// among them. It is always written back as RFC1123 with a numeric zone, which
+// is what dpkg requires: a zone name is invalid here even when the underlying
+// value carries one, as it does for a date taken from a file's mtime or from
+// time.Now. A changelog written before that convention settled therefore does
+// not round trip byte for byte; reformatting it once reaches a fixed point that
+// does.
 //
 // Neither the reader nor the writer compresses: binary packages ship the
 // changelog gzipped, and wrapping the stream is left to the caller.

@@ -66,11 +66,15 @@ generators:
 - The distribution list may be **empty** (`hello (1.3-6); priority=LOW`) and the
   urgency may be absent or uppercase. dpkg's own regex requires a distribution;
   the archive disagrees, and the archive wins.
-- Trailer dates go through `types/time`, so they are re-emitted RFC1123 with a
-  numeric zone. hello's space-padded 1990s days therefore do *not* round trip
-  byte for byte - `TestReformatIsIdempotent` pins the fixed point instead. Do
-  not "fix" this by storing the raw date string. A trailing blank line at EOF is
-  dropped the same way (the libc6-*-cross changelogs ship one).
+- Trailer dates are *written* with `RFC1123Z`, deliberately not through
+  `types/time.MarshalText`: dpkg requires a numeric zone here, and MarshalText
+  keeps a zone name when the value has one - which a date from a file mtime or
+  `time.Now()` always does (`CEST`, not `+0200`). Decoded values are already
+  anchored in an unnamed zone and render the same either way.
+- Because dates are normalized on write, hello's space-padded 1990s days do
+  *not* round trip byte for byte - `TestReformatIsIdempotent` pins the fixed
+  point instead. Do not "fix" this by storing the raw date string. A trailing
+  blank line at EOF is dropped the same way (libc6-*-cross ships one).
 - A date no layout accepts gets one salvage pass - drop the weekday, cut the
   month to three letters - because `dpkg-parsechangelog` never parses this
   field, it hands the string through verbatim. bash is still in the archive with

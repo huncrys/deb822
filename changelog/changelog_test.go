@@ -299,6 +299,29 @@ func TestWriteSynthesised(t *testing.T) {
 		" -- Kristof Bach <crys@crys.hu>  Wed, 13 May 2026 18:04:05 +0200\n", buf.String())
 }
 
+// TestWriteNumericZone pins that the trailer date carries a numeric zone even
+// when the entry was built from a wall clock time in a named location, which is
+// what a file's mtime and time.Now() both give. dpkg rejects a zone name here.
+func TestWriteNumericZone(t *testing.T) {
+	loc, err := stdtime.LoadLocation("Europe/Budapest")
+	require.NoError(t, err)
+
+	var buf bytes.Buffer
+
+	require.NoError(t, changelog.NewWriter(&buf).Write(changelog.Entry{
+		Source:        "hello",
+		Version:       version.MustParse("1.0"),
+		Distributions: []string{"unstable"},
+		Urgency:       "medium",
+		Changes:       []string{"", "  * Something.", ""},
+		Maintainer:    "A B <a@b.c>",
+		Date:          deb822time.Time(stdtime.Date(2026, stdtime.May, 13, 18, 4, 5, 0, loc)),
+	}))
+
+	require.Contains(t, buf.String(), " -- A B <a@b.c>  Wed, 13 May 2026 18:04:05 +0200\n")
+	require.NotContains(t, buf.String(), "CEST")
+}
+
 // TestWriteDefaultsUrgency covers the one case where the writer supplies
 // something the caller did not: an entry with no header options at all would
 // otherwise end in a bare semicolon.

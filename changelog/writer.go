@@ -42,10 +42,13 @@ func (w *Writer) Write(e Entry) error {
 		return err
 	}
 
-	date, err := e.Date.MarshalText()
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrInvalidEntry, err)
-	}
+	// dpkg requires a numeric zone in a changelog date; a zone name is invalid
+	// downstream. The date is therefore formatted here rather than through the
+	// module's time type, whose MarshalText keeps a zone name when the value
+	// carries one - and a date taken from a file's mtime, or from time.Now(),
+	// carries the host's local zone, name and all. Values decoded by Reader are
+	// already anchored in an unnamed zone and render identically either way.
+	date := stdtime.Time(e.Date).Format(stdtime.RFC1123Z)
 
 	w.buf = w.buf[:0]
 	if w.wrote {

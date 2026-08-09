@@ -109,12 +109,21 @@ if errors.Is(err, changelog.ErrNotDebianFormat) {
   from a corrupt one, so an archive tool can publish an upstream changelog
   unparsed instead of rejecting the package. Free-form history past the last
   entry is exposed via `Reader.Trailing()` rather than failing the read.
-- Trailer dates are re-emitted through `types/time`, i.e. RFC1123 with a
-  numeric zone. A changelog carrying the space-padded days of the nineties
-  therefore reformats once and is a fixed point after that. Dates no layout
+- Trailer dates are always written as RFC1123 with a *numeric* zone, which is
+  what dpkg requires - including for an entry built from a file mtime or
+  `time.Now()`, whose zone carries a name. A changelog carrying the
+  space-padded days of the nineties therefore reformats once and is a fixed
+  point after that. Dates no layout
   accepts get one salvage pass, since `dpkg-parsechangelog` never parses that
   field and the archive shows it (bash ships `Thur, 19 June 1997`).
 - Compression is the caller's business; both ends take plain streams.
+
+## v0.10.1 changes
+
+- `changelog`: the trailer date is now always written with a numeric zone.
+  Building an entry from a file mtime or `time.Now()` emitted the zone *name*
+  (`CEST` rather than `+0200`), which dpkg rejects. Files read through `Reader`
+  were never affected.
 
 ## v0.10.0 changes
 
