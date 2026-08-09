@@ -33,24 +33,43 @@ package arch
 
 import (
 	"errors"
+	"slices"
 	"strings"
 )
 
+// Default components used to complete a shortened concrete architecture
+// string, and to shorten a tuple back into its canonical form.
+const (
+	defaultABI  = "base"
+	defaultLibc = "gnu"
+	defaultOS   = "linux"
+)
+
+// Arch is a Debian architecture tuple, as defined by dpkg since 1.18.11.
+//
+// A tuple has four components, written abi-libc-os-cpu, for example
+// base-gnu-linux-amd64. Most tuples are written in a shortened form that
+// omits the leading components that hold their default value, so the tuple
+// above is normally written simply as amd64.
 type Arch struct {
-	ABI string
-	OS  string
-	CPU string
+	ABI  string // e.g. "base", "eabihf"
+	Libc string // e.g. "gnu", "musl"
+	OS   string // e.g. "linux", "kfreebsd"
+	CPU  string // e.g. "amd64", "all", "any"
 }
 
+// IsWildcard reports whether the architecture contains a wildcard component.
 func (arch *Arch) IsWildcard() bool {
 	if arch.CPU == "all" {
 		return false
 	}
 
-	if arch.ABI == "any" || arch.OS == "any" || arch.CPU == "any" {
-		return true
-	}
-	return false
+	return arch.hasAny()
+}
+
+// hasAny reports whether any component of the tuple is the "any" wildcard.
+func (arch *Arch) hasAny() bool {
+	return arch.ABI == "any" || arch.Libc == "any" || arch.OS == "any" || arch.CPU == "any"
 }
 
 func (arch *Arch) Is(other *Arch) bool {
@@ -64,29 +83,67 @@ func (arch *Arch) Is(other *Arch) bool {
 		return other.Is(arch)
 	}
 
-	if (arch.CPU == other.CPU || (arch.CPU != "all" && other.CPU == "any")) &&
+	/* "all" is never satisfied by a wildcard, only by a literal "all". */
+	return (arch.CPU == other.CPU || (arch.CPU != "all" && other.CPU == "any")) &&
 		(arch.OS == other.OS || other.OS == "any") &&
-		(arch.ABI == other.ABI || other.ABI == "any") {
-
-		return true
-	}
-
-	return false
+		(arch.Libc == other.Libc || other.Libc == "any") &&
+		(arch.ABI == other.ABI || other.ABI == "any")
 }
 
+// String returns the canonical, shortest representation of the architecture
+// tuple. The result always parses back into the very same tuple.
 func (arch Arch) String() string {
-	/* ABI-OS-CPU -- gnu-linux-amd64 */
-	els := []string{}
-	if arch.ABI != "any" && arch.ABI != "all" && arch.ABI != "gnu" && arch.ABI != "" {
-		els = append(els, arch.ABI)
+	/* The zero value renders as the empty string, not as "---". */
+	if arch.ABI == "" && arch.Libc == "" && arch.OS == "" && arch.CPU == "" {
+		return ""
 	}
 
-	if arch.OS != "any" && arch.OS != "all" && arch.OS != "linux" {
-		els = append(els, arch.OS)
+	components := []string{arch.ABI, arch.Libc, arch.OS, arch.CPU}
+
+	switch {
+	case arch.ABI == "all" && arch.Libc == "all" && arch.OS == "all" && arch.CPU == "all":
+		return "all"
+	case arch.ABI == "any" && arch.Libc == "any" && arch.OS == "any" && arch.CPU == "any":
+		return "any"
 	}
 
-	els = append(els, arch.CPU)
-	return strings.Join(els, "-")
+	var short string
+	if arch.hasAny() {
+		short = shortenWildcard(components)
+	} else {
+		short = shortenConcrete(components)
+	}
+
+	/* Only use the shortened form if it parses back into the same tuple,
+	* otherwise fall back to spelling the whole tuple out. */
+	if round, err := Parse(short); err == nil && round == arch {
+		return short
+	}
+
+	return strings.Join(components, "-")
+}
+
+// shortenWildcard drops leading "any" components for as long as the remainder
+// still holds an "any", so that the left-padding rule restores them on parse.
+func shortenWildcard(components []string) string {
+	for len(components) > 1 && components[0] == "any" && slices.Contains(components[1:], "any") {
+		components = components[1:]
+	}
+
+	return strings.Join(components, "-")
+}
+
+// shortenConcrete drops leading components for as long as they hold their
+// default value. Once a component is kept, everything after it is kept too.
+func shortenConcrete(components []string) string {
+	defaults := []string{defaultABI, defaultLibc, defaultOS}
+
+	i := 0
+	for i < len(defaults) && components[i] == defaults[i] {
+		i++
+	}
+
+	return strings.Join(components[i:], "-")
 }
 
 func (arch Arch) MarshalText() ([]byte, error) {
@@ -99,12 +156,12 @@ func (arch *Arch) UnmarshalText(text []byte) error {
 
 // Parse an architecture string into an Arch struct.
 func Parse(arch string) (Arch, error) {
-	result := Arch{
-		ABI: "any",
-		OS:  "any",
-		CPU: "any",
+	var result Arch
+	if err := parseArchInto(&result, arch); err != nil {
+		return Arch{}, err
 	}
-	return result, parseArchInto(&result, arch)
+
+	return result, nil
 }
 
 // MustParse is like Parse, but panics on error.
@@ -116,42 +173,47 @@ func MustParse(arch string) Arch {
 	return result
 }
 
+// parseArchInto expands an architecture string into a full four component
+// tuple. It always assigns every component, and leaves ret untouched on error.
 func parseArchInto(ret *Arch, arch string) error {
-	/* May be in the following form:
-	* `any` (implicitly any-any-any)
-	* kfreebsd-any (implicitly any-kfreebsd-any)
-	* kfreebsd-amd64 (implicitly any-kfreebsd-any)
-	* bsd-openbsd-i386 */
-	flavors := strings.Split(arch, "-")
-	switch len(flavors) {
-	case 1:
-		flavor := flavors[0]
-		/* OK, we've got a single guy like `any` or `amd64` */
-		switch flavor {
-		case "all", "any":
-			ret.ABI = flavor
-			ret.OS = flavor
-			ret.CPU = flavor
-		default:
-			/* right, so we've got something like `amd64`, which is implicitly
-			* gnu-linux-amd64. Confusing, I know. */
-			ret.ABI = "gnu"
-			ret.OS = "linux"
-			ret.CPU = flavor
-		}
-	case 2:
-		/* Right, this is something like kfreebsd-amd64, which is implicitly
-		* gnu-kfreebsd-amd64 */
-		ret.OS = flavors[0]
-		ret.CPU = flavors[1]
-	case 3:
-		/* This is something like bsd-openbsd-amd64 */
-		ret.ABI = flavors[0]
-		ret.OS = flavors[1]
-		ret.CPU = flavors[2]
-	default:
+	if arch == "" {
 		return errors.New("invalid arch string")
 	}
+
+	/* May be in the following form:
+	* `any` (a wildcard, implicitly any-any-any-any)
+	* linux-any (a wildcard, implicitly any-any-linux-any)
+	* amd64 (implicitly base-gnu-linux-amd64)
+	* kfreebsd-amd64 (implicitly base-gnu-kfreebsd-amd64)
+	* musl-linux-amd64 (implicitly base-musl-linux-amd64)
+	* eabihf-gnu-linux-armhf */
+	components := strings.Split(arch, "-")
+	if len(components) > 4 {
+		return errors.New("invalid arch string")
+	}
+
+	if slices.Contains(components, "any") {
+		/* Wildcards are left-padded with "any", following dpkg's
+		* Dpkg::Arch::debwildcard_to_debtuple. */
+		for len(components) < 4 {
+			components = append([]string{"any"}, components...)
+		}
+	} else {
+		switch len(components) {
+		case 1:
+			if components[0] == "all" {
+				components = []string{"all", "all", "all", "all"}
+			} else {
+				components = []string{defaultABI, defaultLibc, defaultOS, components[0]}
+			}
+		case 2:
+			components = []string{defaultABI, defaultLibc, components[0], components[1]}
+		case 3:
+			components = append([]string{defaultABI}, components...)
+		}
+	}
+
+	ret.ABI, ret.Libc, ret.OS, ret.CPU = components[0], components[1], components[2], components[3]
 
 	return nil
 }

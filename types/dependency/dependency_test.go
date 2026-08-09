@@ -277,7 +277,7 @@ func TestPossibilityString(t *testing.T) {
 			name: "name with architecture qualifier",
 			possibility: Possibility{
 				Name: "foo",
-				Arch: &arch.Arch{CPU: "amd64", OS: "any", ABI: "any"},
+				Arch: &arch.Arch{ABI: "base", Libc: "gnu", OS: "linux", CPU: "amd64"},
 			},
 			expected: "foo:amd64",
 		},
@@ -333,7 +333,7 @@ func TestPossibilityString(t *testing.T) {
 			name: "complete possibility",
 			possibility: Possibility{
 				Name: "foo",
-				Arch: &arch.Arch{CPU: "amd64", OS: "any", ABI: "any"},
+				Arch: &arch.Arch{ABI: "base", Libc: "gnu", OS: "linux", CPU: "amd64"},
 				Architectures: &ArchSet{
 					Architectures: []arch.Arch{arch.MustParse("i386")},
 				},

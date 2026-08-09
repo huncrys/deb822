@@ -43,8 +43,113 @@ func TestArchBasics(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, "amd64", a.CPU)
-	require.Equal(t, "gnu", a.ABI)
+	require.Equal(t, "base", a.ABI)
+	require.Equal(t, "gnu", a.Libc)
 	require.Equal(t, "linux", a.OS)
+}
+
+func TestArchParse(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected arch.Arch
+	}{
+		{
+			name:     "single component",
+			input:    "amd64",
+			expected: arch.Arch{ABI: "base", Libc: "gnu", OS: "linux", CPU: "amd64"},
+		},
+		{
+			name:     "all",
+			input:    "all",
+			expected: arch.Arch{ABI: "all", Libc: "all", OS: "all", CPU: "all"},
+		},
+		{
+			name:     "two components are os-cpu",
+			input:    "kfreebsd-amd64",
+			expected: arch.Arch{ABI: "base", Libc: "gnu", OS: "kfreebsd", CPU: "amd64"},
+		},
+		{
+			name:     "three components are libc-os-cpu",
+			input:    "musl-linux-amd64",
+			expected: arch.Arch{ABI: "base", Libc: "musl", OS: "linux", CPU: "amd64"},
+		},
+		{
+			name:     "four components are explicit",
+			input:    "eabihf-gnu-linux-armhf",
+			expected: arch.Arch{ABI: "eabihf", Libc: "gnu", OS: "linux", CPU: "armhf"},
+		},
+		{
+			name:     "bare any wildcard",
+			input:    "any",
+			expected: arch.Arch{ABI: "any", Libc: "any", OS: "any", CPU: "any"},
+		},
+		{
+			name:     "wildcard is left padded",
+			input:    "any-amd64",
+			expected: arch.Arch{ABI: "any", Libc: "any", OS: "any", CPU: "amd64"},
+		},
+		{
+			name:     "os wildcard is left padded",
+			input:    "linux-any",
+			expected: arch.Arch{ABI: "any", Libc: "any", OS: "linux", CPU: "any"},
+		},
+		{
+			name:     "libc wildcard is left padded",
+			input:    "musl-linux-any",
+			expected: arch.Arch{ABI: "any", Libc: "musl", OS: "linux", CPU: "any"},
+		},
+		{
+			name:     "four component wildcard is not padded",
+			input:    "any-any-linux-any",
+			expected: arch.Arch{ABI: "any", Libc: "any", OS: "linux", CPU: "any"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a, err := arch.Parse(tt.input)
+			require.NoError(t, err)
+			require.Equal(t, tt.expected, a)
+
+			/* Parse and UnmarshalText must agree on every path. */
+			var b arch.Arch
+			require.NoError(t, b.UnmarshalText([]byte(tt.input)))
+			require.Equal(t, tt.expected, b)
+		})
+	}
+}
+
+func TestArchParseInvalid(t *testing.T) {
+	for _, input := range []string{"", "a-b-c-d-e"} {
+		t.Run(input, func(t *testing.T) {
+			_, err := arch.Parse(input)
+			require.Error(t, err)
+		})
+	}
+}
+
+func TestArchRoundTrip(t *testing.T) {
+	inputs := []string{
+		"all",
+		"amd64",
+		"i386",
+		"kfreebsd-amd64",
+		"musl-linux-amd64",
+		"eabihf-gnu-linux-armhf",
+		"any",
+		"any-amd64",
+		"linux-any",
+		"musl-linux-any",
+		"any-any-linux-any",
+	}
+
+	for _, input := range inputs {
+		t.Run(input, func(t *testing.T) {
+			a := arch.MustParse(input)
+			require.Equal(t, a, arch.MustParse(a.String()))
+		})
+	}
 }
 
 func TestArchCompareBasics(t *testing.T) {
@@ -97,17 +202,66 @@ func TestArchCompareAllAny(t *testing.T) {
 	require.False(t, wildcard.Is(&wildcard))
 }
 
+func TestArchMatching(t *testing.T) {
+	tests := []struct {
+		name     string
+		arch     arch.Arch
+		other    arch.Arch
+		expected bool
+	}{
+		{
+			name:     "cpu wildcard matches",
+			arch:     arch.MustParse("any-amd64"),
+			other:    arch.MustParse("amd64"),
+			expected: true,
+		},
+		{
+			name:     "cpu wildcard does not match another cpu",
+			arch:     arch.MustParse("any-amd64"),
+			other:    arch.MustParse("arm64"),
+			expected: false,
+		},
+		{
+			name:     "libc wildcard matches",
+			arch:     arch.MustParse("musl-linux-any"),
+			other:    arch.MustParse("musl-linux-amd64"),
+			expected: true,
+		},
+		{
+			name:     "libc wildcard does not match another libc",
+			arch:     arch.MustParse("musl-linux-any"),
+			other:    arch.MustParse("amd64"),
+			expected: false,
+		},
+		{
+			name:     "any does not match all",
+			arch:     arch.MustParse("any"),
+			other:    arch.MustParse("all"),
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.expected, tt.arch.Is(&tt.other))
+			require.Equal(t, tt.expected, tt.other.Is(&tt.arch))
+		})
+	}
+}
+
 func TestMustParse(t *testing.T) {
 	a := arch.MustParse("amd64")
 
 	require.Equal(t, "amd64", a.CPU)
-	require.Equal(t, "gnu", a.ABI)
+	require.Equal(t, "base", a.ABI)
+	require.Equal(t, "gnu", a.Libc)
 	require.Equal(t, "linux", a.OS)
 
 	require.Panics(t, func() {
-		arch.MustParse("a-b-c-d")
+		arch.MustParse("a-b-c-d-e")
 	})
 }
+
 func TestArchString(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -116,48 +270,58 @@ func TestArchString(t *testing.T) {
 	}{
 		{
 			name:     "standard amd64",
-			arch:     arch.Arch{ABI: "gnu", OS: "linux", CPU: "amd64"},
+			arch:     arch.Arch{ABI: "base", Libc: "gnu", OS: "linux", CPU: "amd64"},
 			expected: "amd64",
 		},
 		{
-			name:     "non-standard ABI",
-			arch:     arch.Arch{ABI: "musl", OS: "linux", CPU: "amd64"},
-			expected: "musl-amd64",
+			name:     "non-standard libc",
+			arch:     arch.Arch{ABI: "base", Libc: "musl", OS: "linux", CPU: "amd64"},
+			expected: "musl-linux-amd64",
 		},
 		{
 			name:     "non-standard OS",
-			arch:     arch.Arch{ABI: "gnu", OS: "kfreebsd", CPU: "amd64"},
+			arch:     arch.Arch{ABI: "base", Libc: "gnu", OS: "kfreebsd", CPU: "amd64"},
 			expected: "kfreebsd-amd64",
 		},
 		{
-			name:     "non-standard ABI and OS",
-			arch:     arch.Arch{ABI: "bsd", OS: "openbsd", CPU: "i386"},
+			name:     "non-standard libc and OS",
+			arch:     arch.Arch{ABI: "base", Libc: "bsd", OS: "openbsd", CPU: "i386"},
 			expected: "bsd-openbsd-i386",
 		},
 		{
+			name:     "non-standard ABI",
+			arch:     arch.Arch{ABI: "eabihf", Libc: "gnu", OS: "linux", CPU: "armhf"},
+			expected: "eabihf-gnu-linux-armhf",
+		},
+		{
 			name:     "any wildcard",
-			arch:     arch.Arch{ABI: "any", OS: "any", CPU: "any"},
+			arch:     arch.Arch{ABI: "any", Libc: "any", OS: "any", CPU: "any"},
 			expected: "any",
 		},
 		{
 			name:     "all",
-			arch:     arch.Arch{ABI: "all", OS: "all", CPU: "all"},
+			arch:     arch.Arch{ABI: "all", Libc: "all", OS: "all", CPU: "all"},
 			expected: "all",
 		},
 		{
+			name:     "CPU wildcard",
+			arch:     arch.Arch{ABI: "any", Libc: "any", OS: "any", CPU: "arm64"},
+			expected: "any-arm64",
+		},
+		{
 			name:     "OS wildcard",
-			arch:     arch.Arch{ABI: "gnu", OS: "any", CPU: "amd64"},
-			expected: "amd64",
+			arch:     arch.Arch{ABI: "any", Libc: "any", OS: "linux", CPU: "any"},
+			expected: "linux-any",
 		},
 		{
-			name:     "CPU only",
-			arch:     arch.Arch{ABI: "any", OS: "any", CPU: "arm64"},
-			expected: "arm64",
+			name:     "libc wildcard",
+			arch:     arch.Arch{ABI: "any", Libc: "musl", OS: "linux", CPU: "any"},
+			expected: "musl-linux-any",
 		},
 		{
-			name:     "empty ABI with non-standard OS",
-			arch:     arch.Arch{ABI: "", OS: "kfreebsd", CPU: "amd64"},
-			expected: "kfreebsd-amd64",
+			name:     "zero value",
+			arch:     arch.Arch{},
+			expected: "",
 		},
 	}
 
@@ -170,12 +334,17 @@ func TestArchString(t *testing.T) {
 }
 
 func TestArchMarshalText(t *testing.T) {
-	a := arch.Arch{ABI: "gnu", OS: "linux", CPU: "amd64"}
+	a := arch.Arch{ABI: "base", Libc: "gnu", OS: "linux", CPU: "amd64"}
 
 	text, err := a.MarshalText()
 	require.NoError(t, err)
 
 	require.Equal(t, "amd64", string(text))
+
+	text, err = arch.Arch{}.MarshalText()
+	require.NoError(t, err)
+
+	require.Empty(t, string(text))
 }
 
 func TestArchUnmarshalText(t *testing.T) {
@@ -184,5 +353,5 @@ func TestArchUnmarshalText(t *testing.T) {
 	err := a.UnmarshalText([]byte("amd64"))
 	require.NoError(t, err)
 
-	require.Equal(t, arch.Arch{ABI: "gnu", OS: "linux", CPU: "amd64"}, a)
+	require.Equal(t, arch.Arch{ABI: "base", Libc: "gnu", OS: "linux", CPU: "amd64"}, a)
 }
