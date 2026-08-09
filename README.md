@@ -79,6 +79,11 @@ for {
   without an area prefix.
 - Compression is the caller's business; both ends take plain streams.
 
+## v0.9.0 changes
+
+- New `contents` package: a reader and writer for the archive's `Contents-*`
+  indices (see above). Additive, nothing else changed.
+
 ## v0.8.0 changes
 
 - **Breaking:** `arch.Arch` now models dpkg's four-component architecture
