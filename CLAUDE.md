@@ -49,6 +49,39 @@ from the generators, not from a spec:
   reproduces it byte for byte. The writer never emits the legacy prose header.
 - Compression stays out of the package: both ends take plain streams.
 
+## Changelogs are not deb822 either
+
+`changelog/` is the other non-stanza package. Its invariants also come from the
+generators:
+
+- `Entry.Changes` is the body **verbatim** - blank lines, indentation, trailing
+  whitespace and all - and the writer replays it untouched. dpkg and `dch` put a
+  blank line after the header; goreleaser/chglog (what nFPM uses) does not, and
+  indents continuations by three spaces. Neither is canonical, so normalizing
+  either would corrupt the other. `TestWriteIsByteStable` pins the chglog file,
+  `TestWritePreservesBody` pins the ragged edges.
+- Framing is positional: the header is the only line in column 0, the trailer
+  the only one starting with `" -- "` (exactly one space). Everything else in an
+  entry is body.
+- The distribution list may be **empty** (`hello (1.3-6); priority=LOW`) and the
+  urgency may be absent or uppercase. dpkg's own regex requires a distribution;
+  the archive disagrees, and the archive wins.
+- Trailer dates go through `types/time`, so they are re-emitted RFC1123 with a
+  numeric zone. hello's space-padded 1990s days therefore do *not* round trip
+  byte for byte - `TestReformatIsIdempotent` pins the fixed point instead. Do
+  not "fix" this by storing the raw date string. A trailing blank line at EOF is
+  dropped the same way (the libc6-*-cross changelogs ship one).
+- A date no layout accepts gets one salvage pass - drop the weekday, cut the
+  month to three letters - because `dpkg-parsechangelog` never parses this
+  field, it hands the string through verbatim. bash is still in the archive with
+  `Thur, 19 June 1997 19:13:34 +0100`. Without the salvage one 1997 line fails
+  the whole file.
+- `ErrNotDebianFormat` (first non-blank line is not a header) is load-bearing
+  for aptify: packages without a `changelog.Debian` ship upstream's own file,
+  which must be publishable unparsed rather than rejected. Free-form history
+  past the last entry goes to `Reader.Trailing()`, never to an error.
+- Compression stays out of the package here too.
+
 ## Struct tags
 
 Serialization uses the `debian:` tag (`debian:"Field-Name[,omitempty][,inline]"`),

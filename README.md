@@ -7,8 +7,8 @@ Supported document types: binary package stanzas (`types.Package`), repository
 Release/InRelease files (`types.Release`), Sources index entries (`types.Source`),
 source control files (`types.Dsc`) and upload control files (`types.Changes`).
 OpenPGP clearsigned input is verified transparently when a keyring is supplied.
-The `contents` package additionally covers the archive's `Contents-*` indices,
-which are not deb822 documents.
+The `contents` and `changelog` packages additionally cover the archive's
+`Contents-*` indices and Debian changelogs, which are not deb822 documents.
 
 ## Struct tags
 
@@ -78,6 +78,48 @@ for {
 - `ParseQualifiedName` splits the second column, tolerating names with and
   without an area prefix.
 - Compression is the caller's business; both ends take plain streams.
+
+## Changelogs
+
+`changelog` reads and writes Debian changelogs: `debian/changelog` in a source
+package, and the `changelog.Debian.gz` a binary package ships in
+`/usr/share/doc`. It is not a deb822 document either, but it is what
+`dpkg-genchanges` and `dpkg-source` derive the `.changes` and `.dsc` this
+library already models from.
+
+```go
+r := changelog.NewReader(gzipReader)
+entries, err := r.ReadAll() // newest first
+if errors.Is(err, changelog.ErrNotDebianFormat) {
+    // the package ships an upstream changelog instead; treat it as opaque text
+}
+```
+
+- `Entry.Changes` holds the body *verbatim*, blank lines and indentation
+  included, and the writer plays it back untouched. Generators disagree about
+  the layout - dpkg and `dch` put a blank line after the header, nFPM's
+  goreleaser/chglog does not and indents continuations by three spaces - and
+  none of it is normalized away.
+- The header option list is exposed as `Urgency` plus an ordered `Options`
+  slice, so the `binary-only=yes` of a binNMU survives a round trip;
+  `Entry.BinaryOnly()` and `Entry.Option(key)` read it back.
+- Ancient entries with no distribution (`hello (1.3-6); priority=LOW`) and
+  uppercase urgencies parse as written.
+- `ErrNotDebianFormat` distinguishes a file that never was a Debian changelog
+  from a corrupt one, so an archive tool can publish an upstream changelog
+  unparsed instead of rejecting the package. Free-form history past the last
+  entry is exposed via `Reader.Trailing()` rather than failing the read.
+- Trailer dates are re-emitted through `types/time`, i.e. RFC1123 with a
+  numeric zone. A changelog carrying the space-padded days of the nineties
+  therefore reformats once and is a fixed point after that. Dates no layout
+  accepts get one salvage pass, since `dpkg-parsechangelog` never parses that
+  field and the archive shows it (bash ships `Thur, 19 June 1997`).
+- Compression is the caller's business; both ends take plain streams.
+
+## v0.10.0 changes
+
+- New `changelog` package: a reader and writer for Debian changelogs (see
+  above). Additive, nothing else changed.
 
 ## v0.9.0 changes
 

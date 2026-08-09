@@ -1,0 +1,521 @@
+atuin-client (18.19.0) unstable; urgency=low
+  * chore(release): prepare for release 18.19.0 (#3847)
+   - ### Bug Fixes
+   - - *(client)* Avoid panic decoding an empty encryption key
+   - ([#3803](https://github.com/atuinsh/atuin/issues/3803))
+   - - *(client)* Keep sqlx-postgres out of the client crate
+   - ([#2884](https://github.com/atuinsh/atuin/issues/2884))
+   - ([#3823](https://github.com/atuinsh/atuin/issues/3823))
+   - - *(config)* Preserve comments in `atuin config set`
+   - ([#3766](https://github.com/atuinsh/atuin/issues/3766))
+   - - *(search)* Correct fuzzy result ranking
+   - ([#3603](https://github.com/atuinsh/atuin/issues/3603))
+   - ([#3624](https://github.com/atuinsh/atuin/issues/3624))
+   - - Fix atuin-search-bench/benches/search.rs
+   - ([#3788](https://github.com/atuinsh/atuin/issues/3788))
+   - - Close OSC133 C when launching Atuin AI to prevent content erasure
+   - ([#3794](https://github.com/atuinsh/atuin/issues/3794))
+   - - Authenticate beta release push as atuin-bot
+   - ([#3809](https://github.com/atuinsh/atuin/issues/3809))
+   - - Copy vendored axoasset into docker builder stage
+   - ([#3816](https://github.com/atuinsh/atuin/issues/3816))
+   - ### Documentation
+   - - Clarify update check network, provide build command
+   - ([#3767](https://github.com/atuinsh/atuin/issues/3767))
+   - - Remove old i18n docs
+   - ([#3787](https://github.com/atuinsh/atuin/issues/3787))
+   - - Use shell-agnostic install command in quickstart pages
+   - ([#3820](https://github.com/atuinsh/atuin/issues/3820))
+   - - Document named stats periods (today/week/month/year)
+   - ([#3821](https://github.com/atuinsh/atuin/issues/3821))
+   - - State minimum supported Rust version in install guide
+   - ([#3822](https://github.com/atuinsh/atuin/issues/3822))
+   - - Document iTerm2 tmux popup incompatibility
+   - ([#3826](https://github.com/atuinsh/atuin/issues/3826))
+   - - Clarify key binding snippets belong in shell startup file
+   - ([#3837](https://github.com/atuinsh/atuin/issues/3837))
+   - - Mention RustRover in IDE integration guidance
+   - ([#3834](https://github.com/atuinsh/atuin/issues/3834))
+   - ### Features
+   - - *(client)* Show intent in inspector
+   - ([#3804](https://github.com/atuinsh/atuin/issues/3804))
+   - - *(client)* Enable pty-proxy via config
+   - ([#3828](https://github.com/atuinsh/atuin/issues/3828))
+   - - *(config)* Validate new settings in `atuin config set` before writing
+   - them to disk ([#3769](https://github.com/atuinsh/atuin/issues/3769))
+   - - *(lab)* Experimental `atuin lab share`
+   - - *(search)* Remove the "skim" engine
+   - ([#3825](https://github.com/atuinsh/atuin/issues/3825))
+   - - Remove word with ALT-Backspace ALT-D
+   - ([#2457](https://github.com/atuinsh/atuin/issues/2457))
+   - - Add scheduled beta release workflow
+   - ([#3805](https://github.com/atuinsh/atuin/issues/3805))
+   - - Migrate TLS backend from rustls to native-tls
+   - ([#3807](https://github.com/atuinsh/atuin/issues/3807))
+   - - Make `update` a real subcommand
+   - ([#3813](https://github.com/atuinsh/atuin/issues/3813))
+   - - Capability negotiation protocol (client + server)
+   - ([#3797](https://github.com/atuinsh/atuin/issues/3797))
+   - ### Miscellaneous Tasks
+   - - *(ci)* Fix `package` step
+   - ([#3770](https://github.com/atuinsh/atuin/issues/3770))
+   - - Remove Store trait
+   - ([#3779](https://github.com/atuinsh/atuin/issues/3779))
+   - - Daemon search benchmark (divan + CodSpeed)
+   - ([#3763](https://github.com/atuinsh/atuin/issues/3763))
+   - - Run CodSpeed benchmarks on macro runners in walltime mode
+   - ([#3786](https://github.com/atuinsh/atuin/issues/3786))
+   - - Add `OrFilter` as a replacement for `Vec`s as filter lists
+   - ([#3768](https://github.com/atuinsh/atuin/issues/3768))
+   - - Add `atuin-domain` crate for shared domain types
+   - ([#3790](https://github.com/atuinsh/atuin/issues/3790))
+   - - Run CodSpeed walltime benchmarks on depot-macos-26
+   - ([#3791](https://github.com/atuinsh/atuin/issues/3791))
+   - - Fix deny.toml and get it to run in CI
+   - ([#3808](https://github.com/atuinsh/atuin/issues/3808))
+   - - Remove codspeed workflow
+   - ([#3812](https://github.com/atuinsh/atuin/issues/3812))
+   - - Richer logging for atuin-server
+   - ([#2564](https://github.com/atuinsh/atuin/issues/2564))
+   - - Hide --active sharing
+   - ([#3846](https://github.com/atuinsh/atuin/issues/3846))
+   - ### Refactor
+   - - *(deps)* Bump thiserror from 2.0.18 to 2.0.19
+   - ([#3839](https://github.com/atuinsh/atuin/issues/3839))
+   - - *(deps)* Bump strum_macros from 0.27.2 to 0.28.0
+   - ([#3841](https://github.com/atuinsh/atuin/issues/3841))
+   - - *(deps)* Bump tonic-types from 0.14.5 to 0.14.6
+   - ([#3842](https://github.com/atuinsh/atuin/issues/3842))
+   - - *(deps)* Bump pulldown-cmark from 0.13.3 to 0.13.4
+   - ([#3840](https://github.com/atuinsh/atuin/issues/3840))
+   - - *(deps)* Bump itertools from 0.14.0 to 0.15.0
+   - ([#3838](https://github.com/atuinsh/atuin/issues/3838))
+   - - Adopt enum_dispatch for enum trait delegation
+   - ([#3806](https://github.com/atuinsh/atuin/issues/3806))
+   - ### Testing
+   - - Adopt rstest across the workspace test suite
+   - ([#3785](https://github.com/atuinsh/atuin/issues/3785))
+   - ### Daemon
+   - - Replace nucleo with frizbee, rank by match quality with frecency
+   - tiebreak ([#3782](https://github.com/atuinsh/atuin/issues/3782))
+  * chore: hide --active sharing (#3846)
+  * docs: mention RustRover in IDE integration guidance (#3834)
+   - <!-- Thank you for making a PR! Bug fixes are always welcome, but if
+   - you're adding a new feature or changing an existing one, we'd really
+   - appreciate if you open an issue, post on the forum, or drop in on
+   - Discord -->
+   - hell ye
+   - ## Checks
+   - - [x] I am happy for maintainers to push small adjustments to this PR,
+   - to speed up the review cycle
+   - - [x] I have checked that there are no existing pull requests for the
+   - same thing
+  * refactor(deps): bump itertools from 0.14.0 to 0.15.0 (#3838)
+  * refactor(deps): bump pulldown-cmark from 0.13.3 to 0.13.4 (#3840)
+  * refactor(deps): bump tonic-types from 0.14.5 to 0.14.6 (#3842)
+  * refactor(deps): bump strum_macros from 0.27.2 to 0.28.0 (#3841)
+  * refactor(deps): bump thiserror from 2.0.18 to 2.0.19 (#3839)
+  * feat(lab): experimental `atuin lab share`
+  * docs: clarify key binding snippets belong in shell startup file (#3837)
+  * feat: capability negotiation protocol (client + server) (#3797)
+  * feat(client): enable pty-proxy via config (#3828)
+   - Adds a `[pty_proxy] enabled` config setting. When set, `atuin init`
+   - emits the pty-proxy exec preamble first, so the proxy starts without a
+   - separate `atuin pty-proxy init` line in shell config.
+   - - Guarded by `ATUIN_PTY_PROXY_ACTIVE`, so we won't get nested sessions
+   - - Unsupported shells (xonsh, powershell) or builds without pty-proxy
+   - warn on stderr instead of emitting shell code
+   - - Docs updated to present the config option as the primary method
+  * chore: Richer logging for atuin-server (#2564)
+   - Co-authored-by: Marko Vejnovic <marko@atuin.sh>
+  * docs: document iTerm2 tmux popup incompatibility (#3826)
+  * feat(search): remove the "skim" engine (#3825)
+   - Remove the "skim" engine in favor of "daemon-fuzzy". If somemone has
+   - `search_mode = "skim"`, this PR will fall back to "fuzzy" but show a
+   - warning in the interactive search UI encouraging the user to switch to
+   - daemon-fuzzy.
+   - This PR also changes the text of `atuin search --help` very slightly:
+   - previously, we accepted both `fulltext` and `full-text` as search modes,
+   - but listed `full-text` as the canonical spelling in the help message.
+   - This PR changes the canonical spelling to `fulltext` while still
+   - accepting both variants. The reasoning for this is that `fulltext` is
+   - the only valid spelling in config.toml.
+   - <img width="2654" height="1300" alt="skim-warning"
+   - src="https://github.com/user-attachments/assets/3db6f1d2-1b84-410c-a040-85300db35046"
+   - />
+  * fix(client): keep sqlx-postgres out of the client crate (#2884) (#3823)
+  * docs: state minimum supported Rust version in install guide (#3822)
+  * docs: document named stats periods (today/week/month/year) (#3821)
+  * fix(search): correct fuzzy result ranking (#3603) (#3624)
+   - - Fixes #3603
+   - Fuzzy search ranked results wrongly whenever the query handed to the
+   - span scorer didn't match the characters SQL actually matched on. Most
+   - visibly: adding a trailing space to a query pushed an unrelated row to
+   - the top.
+   - - **Non-matches outranked real matches.** `reorder_fuzzy` scored an
+   - unmatched row with the sentinel `(0, results.len())`. With few results
+   - that number is tiny and could beat a genuine match's span. Unmatched
+   - rows now map to `usize::MAX`, so they always sort last.
+   - - **The ranking query carried characters SQL never matched.** SQL
+   - matches on tokens with whitespace and operators (`^ $ ' ! |`, `r/.../`)
+   - stripped, but the raw query went to the span scorer. Any space or
+   - operator failed the subsequence check, so every row scored as a
+   - non-match and fell back to recency. The ranking query is now rebuilt
+   - from the tokenizer's plain terms, so it always equals what SQL matched.
+   - Each fix ships a regression test isolating it from the others, plus a
+   - characterisation test that plain and multi-word queries rank unchanged.
+   - ---------
+   - Co-authored-by: taylor.fish <contact@taylor.fish>
+  * docs: use shell-agnostic install command in quickstart pages (#3820)
+  * chore(release): prepare for release 18.19.0-beta.3
+  * refactor: adopt enum_dispatch for enum trait delegation (#3806)
+  * fix: copy vendored axoasset into docker builder stage (#3816)
+   - ## Problem
+   - The `build-docker` workflow has been failing on main since #3813 landed:
+   - ```
+   - error: failed to load source for dependency `axoasset`
+   - Caused by:
+   -   failed to read `/app/vendor/axoasset/Cargo.toml`
+   - Caused by:
+   -   No such file or directory (os error 2)
+   - thread 'main' panicked at .../cargo-chef-0.1.77/src/recipe.rs:224:27
+   - ```
+   - #3813 added `[patch.crates-io] axoasset = { path = "vendor/axoasset" }`.
+   - cargo-chef's recipe skeletons workspace members and their path
+   - dependencies, but not crates pulled in via a `[patch]` path — so the
+   - `cargo chef cook` step in the builder stage tries to read the real
+   - `vendor/axoasset/Cargo.toml`, which was never copied into that layer.
+   - ## Fix
+   - Copy `vendor/` into the builder stage before `cargo chef cook`. Vendor
+   - changes are rare, so this barely affects layer caching.
+   - ## Verification
+   - Reproduced and verified outside docker with the exact toolchain from the
+   - image (rust 1.97.0, cargo-chef 0.1.77): `cargo chef prepare` + `cook
+   - --release` in a bare directory fails with the identical panic; with
+   - `vendor/` copied alongside the recipe, cook completes cleanly (451
+   - crates, exit 0).
+   - ## Checks
+   - - [x] I am happy for maintainers to push small adjustments to this PR,
+   - to speed up the review cycle
+   - - [x] I have checked that there are no existing pull requests for the
+   - same thing
+  * feat: make `update` a real subcommand (#3813)
+   - After this change, we no longer install atuin-update alongside atuin and
+   - instead take the axo library, and use it as part of a new update
+   - subcommand.
+   - Once this is confirmed working, we can start working towards an auto
+   - update
+   - I've named them "nightly" in the config, because that makes it clear
+   - that a new release ships ~every weekday
+   - ## Checks
+   - - [ ] I am happy for maintainers to push small adjustments to this PR,
+   - to speed up the review cycle
+   - - [ ] I have checked that there are no existing pull requests for the
+   - same thing
+  * Remove security section from README
+   - Removed the security section and contact information from the README.
+  * Revise security policy and reporting instructions (#3814)
+   - Updated the vulnerability reporting section and removed supported
+   - versions
+   - <!-- Thank you for making a PR! Bug fixes are always welcome, but if
+   - you're adding a new feature or changing an existing one, we'd really
+   - appreciate if you open an issue, post on the forum, or drop in on
+   - Discord -->
+   - ## Checks
+   - - [ ] I am happy for maintainers to push small adjustments to this PR,
+   - to speed up the review cycle
+   - - [ ] I have checked that there are no existing pull requests for the
+   - same thing
+  * ci: remove codspeed workflow (#3812)
+   - We don't have the resources to make this reliable AND fast right now
+   - ## Checks
+   - - [ ] I am happy for maintainers to push small adjustments to this PR,
+   - to speed up the review cycle
+   - - [ ] I have checked that there are no existing pull requests for the
+   - same thing
+  * feat: Migrate TLS backend from rustls to native-tls (#3807)
+   - ## Fixes
+   - - #1142
+   - - #2528
+   - - #570
+   - - #3369
+   - - #968
+   - - #3196
+  * chore: fix deny.toml and get it to run in CI (#3808)
+  * chore(release): prepare for release 18.19.0-beta.2
+  * fix: authenticate beta release push as atuin-bot (#3809)
+  * feat: add scheduled beta release workflow (#3805)
+   - Runs every weekday, other than Monday. Gives us a chance to push a
+   - stable release, and avoid shipping something that hasn't really changed
+   - since friday.
+   - Will always increment one too whatever the beta is, or create -beta.1 if
+   - the last release was stable.
+   - We can run it manually, too
+   - ## Checks
+   - - [ ] I am happy for maintainers to push small adjustments to this PR,
+   - to speed up the review cycle
+   - - [ ] I have checked that there are no existing pull requests for the
+   - same thing
+  * feat(client): show intent in inspector (#3804)
+  * fix(client): avoid panic decoding an empty encryption key (#3803)
+  * chore(deps): bump frizbee to 0.12.0 (#3802)
+  * chore(release): prepare for release 18.19.0-beta.1 (#3799)
+   - ### Bug Fixes
+   - - *(config)* Preserve comments in `atuin config set` (#3766)
+   - - Fix atuin-search-bench/benches/search.rs (#3788)
+   - - Close OSC133 C when launching Atuin AI to prevent content erasure
+   - (#3794)
+   - ### Documentation
+   - - Clarify update check network, provide build command (#3767)
+   - - Remove old i18n docs (#3787)
+   - ### Features
+   - - *(config)* Validate new settings in `atuin config set` before writing
+   - them to disk (#3769)
+   - - Remove word with ALT-Backspace ALT-D (#2457)
+   - ### Miscellaneous Tasks
+   - - *(ci)* Fix `package` step (#3770)
+   - - Remove Store trait (#3779)
+   - - Daemon search benchmark (divan + CodSpeed) (#3763)
+   - - Run CodSpeed benchmarks on macro runners in walltime mode (#3786)
+   - - Add `OrFilter` as a replacement for `Vec`s as filter lists (#3768)
+   - - Add `atuin-domain` crate for shared domain types (#3790)
+   - - Run CodSpeed walltime benchmarks on depot-macos-26 (#3791)
+   - ### Testing
+   - - Adopt rstest across the workspace test suite (#3785)
+   - ### Daemon
+   - - Replace nucleo with frizbee, rank by match quality with frecency
+   - tiebreak (#3782)
+  * daemon: replace nucleo with frizbee, rank by match quality with frecency tiebreak (#3782)
+   - Experimenting with frizbee, an alternative fuzzy matcher. It shows
+   - promising performance increases vs nucleo for our usage.
+   - I've removed our dep on nucleo, and vendored the nucleo diatric
+   - normalisation table
+   - Flagging that this is MPL licensed. This is copyleft, but is fine to
+   - include in the codebase as it is limited to just the one file. cc
+   - @taylordotfish who knows much more about licenses than I do!
+   - ---------
+   - Co-authored-by: taylor.fish <contact@taylor.fish>
+  * feat: Remove word with ALT-Backspace ALT-D (#2457)
+  * test: adopt rstest across the workspace test suite (#3785)
+   - Co-authored-by: taylor.fish <contact@taylor.fish>
+  * fix: Close OSC133 C when launching Atuin AI to prevent content erasure (#3794)
+  * ci: run CodSpeed walltime benchmarks on depot-macos-26 (#3791)
+   - The shared `codspeed-macro` pool has been queueing PR benchmark runs for
+   - 20+ minutes, and CodSpeed flags its comparisons with "different runtime
+   - environments detected" — the base and head runs land on different runner
+   - generations, which makes small regressions/improvements hard to trust
+   - (see the noise on #3782).
+   - Depot's macOS runners are whole dedicated machines, so walltime numbers
+   - should be stable and comparable run to run. CodSpeed's runner ships
+   - `aarch64-apple-darwin` builds, so walltime mode is supported there.
+   - Merging this first lets `main` record baseline benchmark data on the new
+   - runner; #3782 will then rebase and re-benchmark against a like-for-like
+   - base.
+  * chore: add `atuin-domain` crate for shared domain types (#3790)
+  * docs: Remove old i18n docs (#3787)
+  * fix: fix atuin-search-bench/benches/search.rs (#3788)
+  * chore: add `OrFilter` as a replacement for `Vec`s as filter lists (#3768)
+   - In several parts of the code, we use `Vec`s as filters, where the filter
+   - allows an item if it matches any element of the `Vec`, or if the `Vec`
+   - is empty, all items are allowed.
+   - These semantics are not obvious from the type, particularly the empty
+   - `Vec` meaning "allow all". This PR adds a new type, `OrFilter`, with
+   - exactly these semantics. As a benefit, it also has O(log n) lookups
+   - instead of O(n).
+  * feat(config): validate new settings in `atuin config set` before writing them to disk (#3769)
+   - Currently, `atuin config set` doesn't verify that the new settings can
+   - actually be deserialized, which means you can easily break your
+   - configuration in a way that `atuin config set` can't fix, because all
+   - `atuin` subcommands require a valid config.
+   - This PR validates the new settings before actually writing them to disk.
+  * ci: run CodSpeed benchmarks on macro runners in walltime mode (#3786)
+   - <!-- Thank you for making a PR! Bug fixes are always welcome, but if
+   - you're adding a new feature or changing an existing one, we'd really
+   - appreciate if you open an issue, post on the forum, or drop in on
+   - Discord -->
+   - Gives us a reliable machine to run benchmarks on, with no architecture
+   - changes happening randomly and producing noise
+   - ## Checks
+   - - [ ] I am happy for maintainers to push small adjustments to this PR,
+   - to speed up the review cycle
+   - - [ ] I have checked that there are no existing pull requests for the
+   - same thing
+  * bench: daemon search benchmark (divan + CodSpeed) (#3763)
+   - Benchmarks + CI only — no behavior changes. Merging this first records
+   - the nucleo-era baseline on CodSpeed, so the frizbee PR stacked on top
+   - (#3782) shows its improvement directly in its CodSpeed report.
+   - ## What
+   - Adds `crates/atuin-search-bench`: a
+   - [divan](https://github.com/nvzqz/divan) benchmark measuring the daemon's
+   - `SearchIndex::search` **end-to-end** — index built from
+   - shell-history-shaped data, then queried the way the interactive UI does
+   - (realistic query set, limit 200, including the empty-query and
+   - directory-filtered paths).
+   - - **Engine-agnostic benchmark names**
+   - (`daemon_search[<scale>/<query>]`): they measure whatever fuzzy matcher
+   - the daemon currently uses, so an engine swap shows up as a step change
+   - in the tracked series rather than as a new set of benchmarks.
+   - - Deterministic synthetic history generator shaped after a real
+   - 168k-line history (zipf-ish repeated head, templated body with
+   - high-cardinality args so uniqueness lands near real history's ~30%, long
+   - tail incl. very long commands and some unicode). `BENCH_DATA` runs
+   - against a real exported history instead; `BENCH_SCALES`/`BENCH_SEED` env
+   - knobs, sampling tuned via divan's own `DIVAN_*` vars.
+   - - Result counts are sanity-checked per scale so a broken query or filter
+   - shows up in the logs rather than as a suspiciously fast run.
+   - - The `divan` dependency is CodSpeed's drop-in compat crate, so the same
+   - bench runs natively via `cargo bench` and instrumented under
+   - `cargo-codspeed`.
+   - - CI: wired into the existing `codspeed.yml` workflow (adds `-p
+   - atuin-search-bench` to the build/run, with a reduced `BENCH_SCALES`
+   - since instrumented index builds at 1M+ lines would dominate the job).
+   - ## Baseline this records (M-series MacBook, native, 1M history lines /
+   - 188k unique commands)
+   - | query | current daemon (nucleo) |
+   - |---|---|
+   - | empty | 9.1 ms |
+   - | `git` | 18.5 ms |
+   - | `git p` | 19.2 ms |
+   - | `docker compose up` | 20.5 ms |
+   - | `zzznomatchzzz` | 16.9 ms |
+   - | `git` (directory filter) | 39.0 ms |
+   - #3782 drops these 69–95%.
+  * Add CodSpeed continuous benchmarking (#3784)
+   - This wires the existing `divan` benchmarks up to CodSpeed so that
+   - performance is measured on every push to `main` and on every pull
+   - request, and extends the benchmark coverage of a few hot paths.
+   - ## What changed
+   - **CodSpeed integration**
+   - - `divan` is now the
+   - [`codspeed-divan-compat`](https://codspeed.io/docs/benchmarks/rust/divan)
+   - crate (renamed to `divan`) in `atuin-client`, `atuin-history` and
+   - `atuin-nucleo-matcher`. Imports and benchmark code are unchanged, and
+   - the layer is a passthrough outside of `cargo codspeed`, so plain `cargo
+   - bench` keeps working exactly as before.
+   - - New `.github/workflows/codspeed.yml` builds the benchmark targets with
+   - `cargo codspeed build` and runs them through `CodSpeedHQ/action@v4` in
+   - `simulation` mode (deterministic CPU simulation, hardware agnostic, with
+   - flamegraphs). It runs on `depot-ubuntu-24.04`, like the rest of the Rust
+   - CI, authenticates via OIDC, and supports `workflow_dispatch` so CodSpeed
+   - can backfill historical data.
+   - - CodSpeed badge added to the README, and the benchmark section of
+   - `AGENTS.md` updated.
+   - **New benchmarks**
+   - - `atuin-client`: `history_store.rs` covers
+   - `HistoryRecord::{serialize,deserialize}` for a single entry and for a
+   - 100 entry sync page. Every recorded command is serialized before being
+   - stored or synced, and every entry pulled from the server is deserialized
+   - again.
+   - - `atuin-client`: `record/encryption.rs` covers PASETO V4 envelope
+   - `encrypt`/`decrypt` of history records, which runs once per synced
+   - entry.
+   - - `atuin-nucleo-matcher`: `fuzzy_match.rs` covers `Matcher::fuzzy_match`
+   - over 200/1000/10000 candidates and `Pattern::match_list` for the four
+   - atom kinds a user can type (fuzzy, multi word, `'substring`, `^prefix`).
+   - This is re-run on every keystroke in the search UI, so it is the most
+   - latency-sensitive code in the client. The corpus is generated
+   - deterministically from a fixed seed, with no external crate, instead of
+   - relying on a checkout of the Linux tree like the existing `brunch` bench
+   - does.
+   - **Existing benchmark made reproducible**
+   - - `atuin-history/benches/smart_sort.rs` generated its history inside the
+   - measured closure using `rand::thread_rng()` and
+   - `OffsetDateTime::now_utc()`. Generation now happens in `with_inputs`
+   - (excluded from measurement) with a seeded RNG and a fixed "now",
+   - matching the `BenchCtx` pattern already used in `atuin-client`. Without
+   - this, most of the measurement was history generation and results were
+   - not reproducible.
+   - ## Local verification
+   - `codspeed run --mode simulation -- cargo codspeed run` measured all 27
+   - benchmarks:
+   - - `atuin-client`: `serialize`, `deserialize`, `encrypt`, `decrypt` (1,
+   - 100), `reorder_fuzzy_bench` (10, 200, 1000), `push_batch` (1, 10, 100)
+   - - `atuin-history`: `smart_sort` (100 to 10000)
+   - - `atuin-nucleo-matcher`: `fuzzy_match` (200, 1000, 10000), `match_list`
+   - (4 query shapes)
+   - `cargo fmt --check` and `cargo clippy --benches` are clean, and `cargo
+   - bench` still runs the suites with the stock divan output.
+   - ## Next steps
+   - - Merge this PR to get a baseline on `main`; subsequent PRs will then be
+   - annotated with a performance report.
+   - - `push_batch` spends most of its time in SQLite syscalls, which the
+   - simulation instrument reports separately as system time. If you want
+   - that path tracked as wall time instead, it can be moved to a `walltime`
+   - job on CodSpeed macro runners.
+   - - The `atuin-nucleo-bench` binary (brunch, requires cloning the Linux
+   - tree) is left untouched; the new matcher benchmark covers the same code
+   - path in CI without the external checkout.
+   - Co-authored-by: CodSpeed Bot <no-reply@codspeed.io>
+  * chore: Remove Store trait (#3779)
+  * chore(ci): fix `package` step (#3770)
+   - Right now, the CI `package` step sometimes pulls the `atuin*` crates
+   - from crates.io instead of the local tree. This PR fixes that by clearing
+   - the relevant cached artifacts. Compared to the approach of reducing the
+   - cached paths (removing `target` and `~/.cargo/registry/src`), this
+   - approach builds much faster as all of the non-Atuin dependencies don't
+   - have to be compiled every time.
+  * docs: clarify update check network, provide build command (#3767)
+   - <!-- Thank you for making a PR! Bug fixes are always welcome, but if
+   - you're adding a new feature or changing an existing one, we'd really
+   - appreciate if you open an issue, post on the forum, or drop in on
+   - Discord -->
+   - ## Checks
+   - - [ ] I am happy for maintainers to push small adjustments to this PR,
+   - to speed up the review cycle
+   - - [ ] I have checked that there are no existing pull requests for the
+   - same thing
+  * fix(config): preserve comments in `atuin config set` (#3766)
+   - Currently, when `atuin config set` modifies an existing key, any comment
+   - above that key is deleted:
+   - Before:
+   - ```toml
+   - auto_sync = true
+   - # some comment here
+   - # another comment here
+   - style = "auto"
+   - ```
+   - After `atuin config set style full`:
+   - ```toml
+   - auto_sync = true
+   - style = "full"
+   - ```
+   - This PR fixes the issue by transferring the old decor from the existing
+   - value.
+
+ -- Ellie Huxtable <ellie@atuin.sh>  Mon, 03 Aug 2026 23:05:00 +0000
+
+atuin-client (18.18.1) unstable; urgency=low
+  * chore(release): prepare for release 18.18.1 (#3765)
+   - ### Bug Fixes
+   - - *(crates.io)* Fix installation from crates.io
+   - ([#3764](https://github.com/atuinsh/atuin/issues/3764))
+   - ### Refactor
+   - - *(daemon)* Drop fs4, use std::fs file locking
+   - ([#3753](https://github.com/atuinsh/atuin/issues/3753))
+  * fix(crates.io): fix installation from crates.io (#3764)
+   - The `atuin` crate relies on a file that lies outside the crate root and
+   - thus isn't included in the package uploaded to crates.io. This PR fixes
+   - the issue by symlinking the required file into the crate. The symlink
+   - will get converted to a regular file when the package is uploaded to
+   - crates.io (we're already using symlinks for other files like README.md).
+   - This PR also fixes the way we're managing vendored repositories.
+   - Previously, we were relying on special fields in commit messages, but
+   - these commit messages get dropped when we squash-merge our PRs. In fact,
+   - we can't rely on git-subtree at all, since we drop its messages too.
+   - This PR uses `git archive` and stores the metadata in a JSON file.
+   - This PR also modifies CI to catch errors like this in the future.
+   - Will fix https://github.com/atuinsh/atuin/issues/3761 once we publish a
+   - new version.
+  * refactor(daemon): drop fs4, use std::fs file locking (#3753)
+   - Co-authored-by: Marko Vejnovic <marko@atuin.sh>
+  * feat(install): don't install bash-preexec in install.sh (#3707)
+   - bash-preexec is now bundled with Atuin (#3650), so it is no longer
+   - necessary to install it in install.sh.
+   - Changes to install.sh get deployed immediately, so **wait to merge this
+   - until immediately after the next release**.
+  * chore(deps): bump futures-util from 0.3.32 to 0.3.33 (#3752)
+  * chore(deps): bump serde_json from 1.0.150 to 1.0.151 (#3754)
+  * chore(deps): bump notify from 7.0.0 to 8.2.0 (#3750)
+  * chore(deps): bump rustls from 0.23.40 to 0.23.42 (#3751)
+
+ -- atuin-bot <152089506+atuin-bot@users.noreply.github.com>  Tue, 28 Jul 2026 00:29:29 +0000
