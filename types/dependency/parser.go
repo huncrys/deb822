@@ -317,7 +317,11 @@ func parsePossibilityOperator(reader *deb822.RuneReader, version *VersionRelatio
 		return nil
 	}
 
-	secondary, _, err := reader.ReadRune()
+	if leader != '<' && leader != '>' {
+		return fmt.Errorf("unknown Operator in Possibility Version modifier: %s", string(leader))
+	}
+
+	secondary, _, err := reader.PeekRune()
 	if err != nil {
 		if errors.Is(err, io.EOF) {
 			return fmt.Errorf("reached EOF before Operator finished: %w", err)
@@ -325,15 +329,30 @@ func parsePossibilityOperator(reader *deb822.RuneReader, version *VersionRelatio
 		return err
 	}
 
-	operator := string([]rune{leader, secondary})
+	if secondary == '<' || secondary == '>' || secondary == '=' {
+		reader.DiscardRune()
 
-	switch operator {
-	case ">=", "<=", "<<", ">>":
-		version.Operator = operator
-		return nil
+		operator := string([]rune{leader, secondary})
+
+		switch operator {
+		case ">=", "<=", "<<", ">>":
+			version.Operator = operator
+			return nil
+		}
+
+		return fmt.Errorf("unknown Operator in Possibility Version modifier: %s", operator)
 	}
 
-	return fmt.Errorf("unknown Operator in Possibility Version modifier: %s", operator)
+	/* Legacy single character operators, deprecated but still accepted by
+	 * dpkg. They are normalized to their modern equivalents here, so "<"
+	 * becomes "<=" and ">" becomes ">=". */
+	if leader == '<' {
+		version.Operator = "<="
+	} else {
+		version.Operator = ">="
+	}
+
+	return nil
 }
 
 func parsePossibilityNumber(reader *deb822.RuneReader, version *VersionRelation) error {

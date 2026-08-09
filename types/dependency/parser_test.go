@@ -196,6 +196,47 @@ func TestVersioningOperators(t *testing.T) {
 	}
 }
 
+func TestVersioningLegacyOperators(t *testing.T) {
+	tests := []struct {
+		input    string
+		operator string
+	}{
+		{input: "foo (< 1.0)", operator: "<="},
+		{input: "foo (<1.0)", operator: "<="},
+		{input: "foo (> 1.0)", operator: ">="},
+		{input: "foo (>1.0)", operator: ">="},
+	}
+
+	for _, test := range tests {
+		dep, err := dependency.Parse(test.input)
+		require.NoError(t, err, test.input)
+
+		require.Len(t, dep.Relations, 1)
+
+		ver := dep.Relations[0].Possibilities[0].Version
+		require.Equal(t, test.operator, ver.Operator)
+		require.Equal(t, "1.0", ver.Version.String())
+
+		// The legacy form is normalized on the way out.
+		require.Equal(t, "foo ("+test.operator+" 1.0)", dep.String())
+	}
+}
+
+func TestVersioningInvalidOperators(t *testing.T) {
+	invalid := []string{
+		"foo (<> 1)",
+		"foo (>< 1)",
+		"foo (=< 1)",
+		"foo (=> 1)",
+		"foo (! 1)",
+	}
+
+	for _, input := range invalid {
+		_, err := dependency.Parse(input)
+		require.Error(t, err, input)
+	}
+}
+
 func TestNoComma(t *testing.T) {
 	_, err := dependency.Parse("foo bar")
 	require.Error(t, err)
