@@ -89,6 +89,97 @@ func TestPackage(t *testing.T) {
 	})
 }
 
+// vcardDescription is 2vcard's description as trixie's Translation-en carries
+// it, unfolded the way the decoder hands it over: one leading space stripped
+// per continuation line, the " ." separator reduced to a blank line, and a
+// newline closing every continuation line, the last one included.
+const vcardDescription = "convert an addressbook to VCARD file format\n" +
+	"2vcard converts address books and alias files into the widely-used\n" +
+	"vCard format. Currently it can convert from abook, Eudora, Juno,\n" +
+	"LDIF, mutt, mh and pine.\n" +
+	"\n" +
+	"2vcard was developed using Perl.\n"
+
+// TestDescriptionMD5Sum pins the checksum against values established outside
+// this library. The multi-line case is 2vcard from Debian trixie: the archive
+// publishes "772b42c5a35b82967966265253189059" as its Description-md5 in both
+// main/binary-amd64/Packages and main/i18n/Translation-en, and md5sum(1) over
+// the Translation-en field body plus its terminating newline agrees. The single
+// line digest was taken the same way, from md5sum(1) over the short
+// description and a newline. The empty case is apt's: it records no checksum
+// rather than the digest of a bare newline.
+func TestDescriptionMD5Sum(t *testing.T) {
+	tests := []struct {
+		name        string
+		description string
+		expected    string
+	}{
+		{
+			name:        "multi-line with separator",
+			description: vcardDescription,
+			expected:    "772b42c5a35b82967966265253189059",
+		},
+		{
+			// A description assembled by hand rarely carries the trailing
+			// newline the decoder leaves behind. The fold trims it either way,
+			// so both spellings have to hash the same.
+			name:        "multi-line without trailing newline",
+			description: strings.TrimSuffix(vcardDescription, "\n"),
+			expected:    "772b42c5a35b82967966265253189059",
+		},
+		{
+			name:        "single line",
+			description: "convert an addressbook to VCARD file format",
+			expected:    "79a8ae8f714db1af30d480dc5f3a8652",
+		},
+		{
+			name:        "empty",
+			description: "",
+			expected:    "",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			pkg := types.Package{
+				Name:         "2vcard",
+				Version:      version.MustParse("0.6-4"),
+				Architecture: arch.MustParse("all"),
+				Description:  test.description,
+			}
+
+			require.Equal(t, test.expected, pkg.DescriptionMD5Sum())
+		})
+	}
+}
+
+// TestDescriptionMD5SumFromWire covers the whole path a repository builder
+// takes: the description arrives folded, the decoder unfolds it, and the
+// checksum still has to come out as the one the archive publishes. Hashing the
+// decoded value directly would not.
+func TestDescriptionMD5SumFromWire(t *testing.T) {
+	stanza := `Package: 2vcard
+Version: 0.6-4
+Architecture: all
+Description: convert an addressbook to VCARD file format
+ 2vcard converts address books and alias files into the widely-used
+ vCard format. Currently it can convert from abook, Eudora, Juno,
+ LDIF, mutt, mh and pine.
+ .
+ 2vcard was developed using Perl.
+Description-md5: 772b42c5a35b82967966265253189059
+`
+
+	decoder, err := deb822.NewDecoder(strings.NewReader(stanza), nil)
+	require.NoError(t, err)
+
+	var pkg types.Package
+	require.NoError(t, decoder.Decode(&pkg))
+
+	require.Equal(t, vcardDescription, pkg.Description)
+	require.Equal(t, pkg.DescriptionMD5, pkg.DescriptionMD5Sum())
+}
+
 func TestRoundTrip(t *testing.T) {
 	packages := `Package: sample-package
 Version: 1.2.3-4

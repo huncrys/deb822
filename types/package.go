@@ -10,8 +10,11 @@
 package types
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"strings"
 
+	"oaklab.hu/debian/deb822/internal/fold"
 	"oaklab.hu/debian/deb822/types/arch"
 	"oaklab.hu/debian/deb822/types/boolean"
 	"oaklab.hu/debian/deb822/types/dependency"
@@ -142,6 +145,22 @@ func (p Package) ID() string {
 	}
 
 	return result
+}
+
+// DescriptionMD5Sum returns the hex md5 checksum apt publishes as
+// Description-md5. apt hashes the description as it appears in the file, so the
+// value has to be folded back before hashing: continuation lines carry their
+// leading space, blank lines are the literal " .", and the newline terminating
+// the field is part of the input. A package with no description has no
+// checksum - apt records none rather than the digest of a bare newline.
+func (p Package) DescriptionMD5Sum() string {
+	if p.Description == "" {
+		return ""
+	}
+
+	sum := md5.Sum([]byte(fold.Value(p.Description) + "\n"))
+
+	return hex.EncodeToString(sum[:])
 }
 
 // Compare compares two packages by name, version, and architecture.
