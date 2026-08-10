@@ -33,6 +33,11 @@ that decode/encode reaches a fixed point. Reordering struct fields changes
 output for every consumer; treat it as a breaking change. The `testdata/`
 files are real Debian archive snapshots and serve as ground truth.
 
+- `Package.DescriptionMD5Sum` hashes the *refolded* on-wire body plus a trailing
+  newline, via `internal/fold` (shared with the stanza writer) - never the decoded
+  value, which is unfolded. An empty description yields `""`: apt records no checksum
+  rather than the digest of a bare newline.
+
 ## Contents indices are not deb822
 
 `contents/` is the one package that does not parse stanzas. Its invariants come
