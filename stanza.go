@@ -36,7 +36,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"strings"
+
+	"oaklab.hu/debian/deb822/internal/fold"
 )
 
 // A Stanza is a block of RFC2822-like key value pairs. This struct contains
@@ -66,11 +67,7 @@ func (p *Stanza) Set(key, value string) {
 
 func (p *Stanza) WriteTo(w io.Writer) (total int64, err error) {
 	for _, key := range p.Order {
-		value := p.Values[key]
-
-		value = strings.Replace(value, "\n", "\n ", -1)
-		value = strings.Replace(value, "\n \n", "\n .\n", -1)
-		value = strings.TrimRight(value, "\n ")
+		value := fold.Value(p.Values[key])
 
 		n, err := w.Write([]byte(fmt.Sprintf("%s: %s\n", key, value)))
 		total += int64(n)
