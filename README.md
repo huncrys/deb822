@@ -4,8 +4,9 @@ A Go [SerDes](https://en.wikipedia.org/wiki/SerDes) library for Debian
 [deb822](https://www.debian.org/doc/debian-policy/ch-controlfields.html) encoding.
 
 Supported document types: binary package stanzas (`types.Package`), repository
-Release/InRelease files (`types.Release`), Sources index entries (`types.Source`),
-source control files (`types.Dsc`) and upload control files (`types.Changes`).
+Release/InRelease files (`types.Release`) and their per component stubs
+(`types.ComponentRelease`), Sources index entries (`types.Source`), source
+control files (`types.Dsc`) and upload control files (`types.Changes`).
 OpenPGP clearsigned input is verified transparently when a keyring is supplied.
 The `contents` and `changelog` packages additionally cover the archive's
 `Contents-*` indices and Debian changelogs, which are not deb822 documents.
@@ -117,6 +118,20 @@ if errors.Is(err, changelog.ErrNotDebianFormat) {
   accepts get one salvage pass, since `dpkg-parsechangelog` never parses that
   field and the archive shows it (bash ships `Thur, 19 June 1997`).
 - Compression is the caller's business; both ends take plain streams.
+
+## v0.11.0 changes
+
+- New `types.ComponentRelease`: the per component, per architecture `Release`
+  stub an archive publishes at
+  `dists/<suite>/<component>/binary-<arch>/Release`. Field order follows
+  Debian's own stubs.
+- New `types.Package.DescriptionMD5Sum()`, returning the hex md5 apt publishes
+  as `Description-md5`. The checksum is taken over the description in its
+  on-wire form, so it cannot be computed from the decoded value: the decoder
+  unfolds continuation lines and turns `" ."` back into a blank line, and apt
+  hashes the folded text plus its terminating newline. An empty description
+  yields `""`, matching apt, which records no checksum rather than the digest
+  of a bare newline. Additive, nothing else changed.
 
 ## v0.10.1 changes
 
